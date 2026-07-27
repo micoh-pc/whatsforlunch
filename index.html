@@ -1,0 +1,736 @@
+<title>What's For Lunch — Timog Edition</title>
+
+<style>
+  :root {
+    color-scheme: dark;
+
+    --ink:      #0D0708;      /* near-black, red-biased */
+    --ink-2:    #150C0D;
+    --panel:    #1D1214;
+    --edge:     #372023;
+    --red:      #C9333A;      /* dark signage red */
+    --red-dim:  #6E1A1F;
+    --red-lit:  #E24B50;      /* lit / hot state only */
+    --gold:     #C98A45;      /* single quiet counterpoint */
+    --cream:    #F2E4E1;
+    --grey:     #A08787;
+    --grey-2:   #6E5254;
+
+    --font-display: "Haettenschweiler", "Impact", "Arial Narrow Bold", "Arial Narrow", sans-serif;
+    --font-body: "Avenir Next", "Avenir", "Segoe UI", system-ui, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+    --r: 3px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(120% 80% at 50% -10%, #2A1214 0%, transparent 62%),
+      var(--ink);
+    color: var(--cream);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 26px 20px 72px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  /* ---------- header ---------- */
+
+  .topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 18px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--edge);
+  }
+  .brand {
+    font-family: var(--font-display);
+    font-size: 30px;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .brand em { font-style: normal; color: var(--red-lit); }
+  .whereami {
+    font-size: 12.5px;
+    color: var(--grey);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 0 auto;
+  }
+  .whereami b { color: var(--cream); font-weight: 600; }
+
+  /* ---------- the one filter ---------- */
+
+  .question {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    text-align: center;
+  }
+  .question h2 {
+    font-family: var(--font-display);
+    font-size: 21px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin: 0;
+    color: var(--cream);
+  }
+  .plates { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .plate {
+    appearance: none;
+    font: inherit;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    padding: 9px 18px;
+    background: transparent;
+    color: var(--grey);
+    border: 1px solid var(--edge);
+    border-radius: var(--r);
+    cursor: pointer;
+    transition: color .12s, border-color .12s, background .12s;
+  }
+  .plate:hover:not([aria-pressed="true"]) { color: var(--cream); border-color: var(--grey-2); }
+  .plate[aria-pressed="true"] {
+    color: var(--cream);
+    background: var(--red-dim);
+    border-color: var(--red);
+    font-weight: 600;
+  }
+  .plate .sub {
+    display: block;
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--grey-2);
+    margin-top: 2px;
+  }
+  .plate[aria-pressed="true"] .sub { color: var(--gold); }
+
+  .potcount {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--grey-2);
+    font-variant-numeric: tabular-nums;
+    margin: 0;
+  }
+  .potcount b { color: var(--cream); font-weight: 400; }
+
+  /* ---------- marquee board ---------- */
+
+  .board {
+    position: relative;
+    background: linear-gradient(180deg, #2C1416 0%, #150A0B 100%);
+    border: 1px solid var(--edge);
+    border-radius: var(--r);
+    padding: 14px;
+    box-shadow: 0 26px 60px -30px #000;
+  }
+
+  .bulbs {
+    position: absolute;
+    inset: 6px;
+    pointer-events: none;
+    border-radius: 2px;
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 22px 4px, 22px 4px, 4px 22px, 4px 22px;
+    background-position: 0 0, 0 100%, 0 0, 100% 0;
+    background-image:
+      radial-gradient(circle at 2px 2px, var(--bulb) 1.6px, transparent 2px),
+      radial-gradient(circle at 2px 2px, var(--bulb) 1.6px, transparent 2px),
+      radial-gradient(circle at 2px 2px, var(--bulb) 1.6px, transparent 2px),
+      radial-gradient(circle at 2px 2px, var(--bulb) 1.6px, transparent 2px);
+    --bulb: var(--red-dim);
+    animation: chase 1.1s steps(11) infinite;
+  }
+  .board.hot .bulbs { --bulb: var(--red-lit); animation-duration: .22s; }
+  .board.won .bulbs { --bulb: var(--red-lit); animation: flash .16s steps(2) 8; }
+  @keyframes chase { to { background-position: 22px 0, -22px 100%, 0 -22px, 100% 22px; } }
+  @keyframes flash { 50% { opacity: .15; } }
+
+  .screen {
+    position: relative;
+    border: 1px solid #33191C;
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 3px),
+      #120809;
+    padding: 34px 26px 28px;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .eyebrow {
+    font-size: 10.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--grey-2);
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .reel {
+    font-family: var(--font-display);
+    font-size: clamp(38px, 7.4vw, 72px);
+    line-height: 0.94;
+    letter-spacing: 0.005em;
+    text-transform: uppercase;
+    text-wrap: balance;
+    margin: 0;
+    color: var(--cream);
+    text-shadow: 0 0 26px rgba(226, 75, 80, 0.2);
+  }
+  .board.hot .reel { color: var(--red-lit); opacity: .82; filter: blur(0.4px); }
+  .board.won .reel {
+    color: var(--red-lit);
+    text-shadow: 0 0 38px rgba(226, 75, 80, 0.45);
+    animation: land .32s cubic-bezier(.2,1.5,.4,1);
+  }
+  @keyframes land { from { transform: scale(1.06) translateY(-4px); } }
+  .reel.idle { color: var(--grey-2); }
+
+  .subline {
+    font-size: 13px;
+    color: var(--grey);
+    letter-spacing: 0.03em;
+    min-height: 20px;
+    margin: 0;
+  }
+  .subline .tag {
+    color: var(--gold);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    font-size: 11px;
+  }
+
+  .lever { display: flex; justify-content: center; margin-top: 4px; }
+
+  .spin {
+    appearance: none;
+    font-family: var(--font-display);
+    font-size: 27px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--cream);
+    background: var(--red);
+    border: 0;
+    border-radius: var(--r);
+    padding: 11px 34px 9px;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #6A1216;
+    transition: transform .08s, box-shadow .08s, background .12s;
+  }
+  .spin:hover { background: var(--red-lit); }
+  .spin:active { transform: translateY(4px); box-shadow: 0 1px 0 #6A1216; }
+  .spin:disabled { background: var(--edge); color: var(--grey-2); box-shadow: none; cursor: wait; }
+
+  .verdict {
+    font-family: var(--font-display);
+    font-size: 15px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--red-lit);
+    border: 2px solid var(--red-dim);
+    border-radius: var(--r);
+    padding: 8px 18px 6px;
+    transform: rotate(-1.4deg);
+    margin: 0;
+  }
+  .verdict[hidden] { display: none; }
+
+  /* ---------- ticket ---------- */
+
+  .ticket {
+    background: var(--panel);
+    border: 1px solid var(--edge);
+    border-radius: var(--r);
+    padding: 20px 22px 22px;
+  }
+  .ticket[hidden] { display: none; }
+
+  .ticket-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 14px;
+    padding-bottom: 14px;
+  }
+  .ticket-head h2 {
+    font-family: var(--font-display);
+    font-size: 27px;
+    line-height: 1.05;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .cuisine {
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--red-lit);
+    border: 1px solid var(--red-dim);
+    border-radius: var(--r);
+    padding: 3px 8px;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+    gap: 1px;
+    background: var(--edge);
+    border: 1px solid var(--edge);
+    border-radius: var(--r);
+    overflow: hidden;
+    margin: 0;
+  }
+  .stat { background: var(--panel); padding: 11px 12px 12px; }
+  .stat dt {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--grey-2);
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+  .stat dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+    color: var(--cream);
+  }
+  .stat dd .unit { color: var(--grey); font-size: 11.5px; }
+  .stat.warn dd { color: var(--gold); }
+
+  .note {
+    margin: 16px 0 0;
+    padding-top: 15px;
+    border-top: 1px dashed var(--grey-2);
+    font-size: 14.5px;
+    color: var(--cream);
+    max-width: 62ch;
+  }
+  .note::before {
+    content: "The word on it — ";
+    color: var(--grey-2);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .lockin {
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--ink);
+    background: var(--cream);
+    border: 1px solid var(--cream);
+    border-radius: var(--r);
+    padding: 8px 16px;
+    text-decoration: none;
+    transition: background .12s;
+  }
+  .lockin:hover { background: #fff; }
+  .stamp {
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--red-dim);
+    border: 1.5px dashed var(--red-dim);
+    border-radius: var(--r);
+    padding: 8px 14px 6px;
+    transform: rotate(1.2deg);
+    margin: 0;
+  }
+
+  /* ---------- footer log ---------- */
+
+  .foot {
+    border-top: 1px solid var(--edge);
+    padding-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .foot .label {
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--grey-2);
+    font-weight: 700;
+    margin: 0 4px 0 0;
+  }
+  .hchip {
+    font-size: 12px;
+    color: var(--grey);
+    border: 1px solid var(--edge);
+    border-radius: var(--r);
+    padding: 4px 9px;
+  }
+  .hchip .n { font-family: var(--font-mono); color: var(--grey-2); font-size: 10.5px; }
+  .linkbtn {
+    appearance: none;
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    font-size: 12px;
+    color: var(--grey-2);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    margin-left: auto;
+  }
+  .linkbtn:hover { color: var(--gold); }
+  .linkbtn[hidden] { display: none; }
+
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--red-lit);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bulbs, .board.won .bulbs { animation: none; }
+    .board.won .reel { animation: none; }
+    .spin { transition: none; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="topbar">
+    <h1 class="brand">What's for <em>lunch</em>?</h1>
+    <p class="whereami">Standing at <b>Timog &times; Sgt. Esguerra</b>, Diliman</p>
+  </header>
+
+  <section class="question">
+    <h2>Is it payday?</h2>
+    <div class="plates" id="budget">
+      <button class="plate" data-tier="any" aria-pressed="true">Surprise me<span class="sub">all 45</span></button>
+      <button class="plate" data-tier="affordable" aria-pressed="false">Not payday<span class="sub">26 spots</span></button>
+      <button class="plate" data-tier="expensive" aria-pressed="false">Payday<span class="sub">19 spots</span></button>
+    </div>
+    <p class="potcount" id="potcount"><b>45</b> places in the pot &middot; 0.16&ndash;1.34 km out</p>
+  </section>
+
+  <main class="board" id="board">
+    <div class="bulbs"></div>
+    <div class="screen">
+      <p class="eyebrow" id="eyebrow">Tonight's board &middot; Timog strip</p>
+      <p class="reel idle" id="reel" aria-live="polite">Pull the lever</p>
+      <p class="subline" id="subline">45 places within walking or delivery range. One of them is lunch.</p>
+      <div class="lever">
+        <button class="spin" id="spin">Spin it</button>
+        <p class="verdict" id="verdict" hidden>The board has spoken</p>
+      </div>
+    </div>
+  </main>
+
+  <section class="ticket" id="ticket" hidden>
+    <div class="ticket-head">
+      <h2 id="tName"></h2>
+      <span class="cuisine" id="tCuisine"></span>
+    </div>
+    <dl class="stats">
+      <div class="stat"><dt>Rating</dt><dd id="tRating"></dd></div>
+      <div class="stat"><dt>Distance</dt><dd id="tDist"></dd></div>
+      <div class="stat" id="tWalkWrap"><dt>On foot</dt><dd id="tWalk"></dd></div>
+      <div class="stat"><dt>Price</dt><dd id="tPrice"></dd></div>
+    </dl>
+    <p class="note" id="tNote"></p>
+    <div class="actions">
+      <a class="lockin" id="tMap" href="#" target="_blank" rel="noopener">Open in Maps</a>
+      <p class="stamp">No take-backs</p>
+    </div>
+  </section>
+
+  <footer class="foot" id="foot" hidden>
+    <p class="label">Already called</p>
+    <button class="linkbtn" id="newround" hidden>Clear the board, new round</button>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* id, name, place_id, rating, count, price_level, cuisine, km, mode, tier, note */
+  var RAW = [
+    [1,"Michael Dubois Restaurant","ChIJWcoEMtG3lzMRKRlnmBA7vcg",4.9,94,4,"fine_dining",0.569,"delivery","expensive","13-course French tasting menu. Reserve ahead."],
+    [2,"Fresh International Buffet | Solaire","ChIJMw9ZWgC3lzMRitb-eX2ejco",3.8,139,4,"buffet",0.872,"delivery","expensive","Lobster buffet at Solaire North."],
+    [4,"Stoned Steaks - Tomas Morato","ChIJD-e0W623lzMRIM5O74eYuCM",4.5,480,3,"steakhouse",0.471,"walkable","expensive","Unlimited wagyu ribeye option."],
+    [3,"Finestra | Solaire Resort QC","ChIJf021RwC3lzMRoTWNNXi5S3E",4.1,36,3,"italian",0.872,"delivery","expensive","38th floor, city-light views."],
+    [33,"Foam Coffee Quezon Ave.","ChIJ28lvf--3lzMRhOQtr4l3Ia8",4.7,1146,2,"cafe",0.16,"walkable","affordable","Open till 2 AM. Cheesy buldak, pastries P80-95."],
+    [22,"Plana's Pantry","ChIJ5z4E7aq3lzMRUd01cZi-t4s",4.5,331,2,"comfort_food",0.174,"walkable","affordable","Hickory BBQ ribs, handcrafted ice cream."],
+    [34,"Buffalo's Wings N' Things - M-Place","ChIJHVuCDNK3lzMRpOImrY-3d58",3.3,27,2,"chicken_wings",0.28,"walkable","affordable","Lowest-rated on this list. Ventilation complaints."],
+    [5,"Melo's Restaurant","ChIJz2hhuau3lzMRqgML5ElmykQ",4.3,216,2,"steakhouse",0.348,"walkable","expensive","Certified Angus and Wagyu. Old-school."],
+    [31,"Saigon Corner PH","ChIJexTsB6y3lzMRaTqUZneob7A",4.3,385,2,"vietnamese",0.469,"walkable","affordable","Up the stairs, easy to miss."],
+    [32,"Vinta Modern Carinderia","ChIJE2b2Yru3lzMRw9EVStTDh6A",4.5,220,2,"filipino_turo_turo",0.501,"delivery","affordable","Veg dishes very cheap, meat dishes pricier."],
+    [20,"Tablo Kitchen x Cafe Timog QC","ChIJ7xmAijG3lzMRJQcB1BHsFqs",4.6,1856,2,"filipino_fusion",0.516,"delivery","affordable","Portions good for 2-3. Sisig, truffle pasta."],
+    [13,"Simon's Steakhouse","ChIJlcMg3ay3lzMRv34gpFlzwaw",4.3,102,2,"steakhouse",0.537,"delivery","expensive","1kg aged angus porterhouse."],
+    [10,"Escobar's Steakhouse","ChIJu1y11U23lzMRGn9h_TIuHXc",4.8,1768,2,"steakhouse",0.542,"delivery","expensive","Best-rated steak in range. Truffle pasta."],
+    [9,"Gulliver's Prime Ribs of Beef","ChIJX1uljFO2lzMREm1y-RRkukI",4.4,257,2,"steakhouse",0.602,"delivery","expensive","Prime rib with sides included."],
+    [27,"HODAI Unli BBQ & Seafood Grill","ChIJKdfdzPO3lzMRFpc8dykkLEc",4.6,2962,2,"korean_bbq",0.64,"delivery","affordable","Best-value unli samgyup nearby."],
+    [11,"Wildflour Restaurant - QC","ChIJ93T3JEK3lzMRjp_L04uJmsk",4.7,1578,2,"bakery_bistro",0.644,"delivery","expensive","Steak with kimchi rice. Bread discounts after 7 PM."],
+    [30,"Ombu Kusina","ChIJYcx5SFK2lzMRRV4QIGTbBmI",4.7,1955,2,"filipino",0.753,"delivery","affordable","Pet-friendly. Opens 6:30 AM."],
+    [28,"Causeway Seafood Restaurant","ChIJT_6dcq23lzMR0hlIATcEqRs",4.3,740,2,"chinese_dimsum",0.791,"delivery","affordable","Classic dim sum. Better than the Congressional branch."],
+    [25,"Lola Ote Restaurant","ChIJ6_Xznq63lzMR3P8q3NDQ8Z4",4.5,740,2,"filipino",0.848,"delivery","affordable","Kare-kare, pork BBQ. Breakfast 7-10 AM only."],
+    [29,"Matzzip Korean Restaurant","ChIJOwwaIFK2lzMRZSeawnBCXls",4.7,103,2,"korean",0.868,"delivery","affordable","Authentic, non-unli. Owner-run."],
+    [6,"Skybar | Solaire Resort North","ChIJdZDQYQC3lzMRqslS8uG6eNg",4.4,38,2,"rooftop_bar",0.872,"delivery","expensive","38F rooftop, 360-degree views."],
+    [7,"Trattoria e Dolci | Solaire North","ChIJ05lgg_m3lzMRIjGOA6JWkAU",4.0,34,2,"italian",0.872,"delivery","expensive","Open till 2 AM."],
+    [8,"Cafe Mangrove | Solaire QC","ChIJfcYbFQC3lzMRFerf1wSEYJo",4.2,52,2,"all_day_dining",0.872,"delivery","expensive","Breakfast is the standout."],
+    [16,"Johnny's Steak and Grill","ChIJ0zS_cVK2lzMRpai8c1JApGQ",4.3,63,2,"steakhouse",0.874,"delivery","expensive","Hotel restaurant. Closed Mondays."],
+    [15,"Baboy Grill","ChIJA-1Uj023lzMRl4w4ScbNe8w",4.9,257,2,"korean_bbq",0.904,"delivery","expensive","Premium non-unli KBBQ. Open till 5 AM."],
+    [12,"Tokyo Gyu Japanese Yakiniku","ChIJsd_EsDrJlzMRrYYvG04LE9Y",3.8,92,2,"yakiniku",0.905,"delivery","expensive","Wagyu, tablet ordering."],
+    [26,"Sambo Kojin - West Avenue","ChIJa9vwFFG2lzMR9vqS7U9jv7o",4.2,1098,2,"buffet",0.915,"delivery","affordable","Recent reviews flag cleanliness issues."],
+    [24,"Crepe Central","ChIJgxaqdqu3lzMRTyoheiO9K9w",4.4,481,2,"crepes",0.988,"delivery","affordable","Savory + dessert. B1G1 cocktails Fri/Sat."],
+    [23,"Yoshimeatsu Tomas Morato","ChIJqcp7lGa3lzMR4cSLcnj4A2Q",4.2,711,2,"korean_bbq",1.021,"delivery","affordable","QR-code unli samgyup, free ice cream."],
+    [14,"Black Bull Steakhouse and Bar","ChIJT1rJXwC3lzMRoxyV-UMqV6E",4.3,59,2,"steakhouse",1.048,"delivery","expensive","Ayala Malls Vertis North."],
+    [21,"Amici - Tomas Morato","ChIJyW8KxLK3lzMRipTy-35pVm8",4.7,748,2,"italian",1.065,"delivery","affordable","Strong value-for-money. Gelato."],
+    [17,"Prologue QC","ChIJbdLp0bK3lzMR2FFGw-HM4Zg",4.3,523,2,"bistro",1.083,"delivery","expensive","Broad menu, solo-diner friendly."],
+    [18,"Delgado.112","ChIJX0J4aWS3lzMRvw4vDOUsfCw",4.6,1129,2,"filipino_spanish",1.316,"delivery","expensive","Heritage house. Crispy pata, truffle croquetas."],
+    [19,"Deer Claus Steakhouse","ChIJ_ct6SgC3lzMREwlZhW-rY8k",4.7,78,2,"steakhouse",1.337,"delivery","expensive","Closed Mondays. Kitchen runs slow."],
+    [41,"Grills & Sizzles Steakhouse","ChIJQ6TBI1W2lzMRQjFBSnOOE-A",4.0,193,1,"buffet",0.203,"walkable","affordable","Closest to origin. Buffet P749-989 but steak reviews are poor."],
+    [42,"Jollibee NBS Quezon Ave","ChIJP0ItTNe3lzMR3bc7Qg8QcR0",3.8,118,1,"fast_food",0.442,"walkable","affordable","Open 24h. Nearest branch."],
+    [38,"Habit Food Group South Triangle","ChIJk98mvaW3lzMRSjKp-DDxtQo",4.3,44,1,"food_hall",0.451,"walkable","affordable","Six stalls: bowls, breakfast, kebab, bento."],
+    [40,"JT's Manukan Grille Scout Borromeo","ChIJR5xZDmW3lzMR8mDFKA3ad4c",4.2,103,1,"filipino_inasal",0.463,"walkable","affordable","Open till 1 AM. Inasal, batchoy, laing."],
+    [37,"Susie's Cuisine Morato","ChIJi7PEiay3lzMRuNfu5Wt_w04",4.2,231,1,"filipino_snacks",0.481,"walkable","affordable","Palabok and kakanin. Closes 7 PM."],
+    [39,"Pepeton's Grill & Catering","ChIJGZ7cEVO2lzMR9Ys9Xk6ElZU",4.4,1022,1,"filipino_grill",0.522,"delivery","affordable","Bulalo, crispy pata, kapalmuks. Parking is rough."],
+    [44,"Timog Food Plaza","ChIJR9fatFK2lzMRTOdKtteoevU",4.3,415,1,"food_court",0.735,"delivery","affordable","24h. Quality varies a lot by stall."],
+    [45,"Scouter's Eatery","ChIJaxcJHmG3lzMRJ5YqZ45Lmqw",4.4,112,1,"filipino_dampa",0.742,"delivery","affordable","~P200/ulam good for 2-3. Open 24h."],
+    [43,"GOODAH!!! Timog","ChIJa9JXcq23lzMRFehLLJB0hKg",3.8,920,1,"filipino_silog",0.786,"delivery","affordable","Open 24h. Goto and tapsilog."],
+    [35,"Drizzled Chicken - Timog","ChIJF43kDAC3lzMRWNHsnzMXbqk",4.8,105,1,"chicken",0.859,"delivery","affordable","Generous servings, sauce guide."],
+    [36,"Thai Mango Timog","ChIJHVR2y563lzMRly97HVIE44I",4.7,591,1,"thai",0.863,"delivery","affordable","Open 24h. Bagoong rice is the value pick."]
+  ];
+
+  var CUISINE_LABEL = {
+    fine_dining: "Fine dining", buffet: "Buffet", steakhouse: "Steakhouse", italian: "Italian",
+    cafe: "Cafe", comfort_food: "Comfort food", chicken_wings: "Wings", vietnamese: "Vietnamese",
+    filipino_turo_turo: "Turo-turo", filipino_fusion: "Filipino fusion", korean_bbq: "Korean BBQ",
+    bakery_bistro: "Bakery bistro", filipino: "Filipino", chinese_dimsum: "Dim sum", korean: "Korean",
+    rooftop_bar: "Rooftop bar", all_day_dining: "All-day dining", yakiniku: "Yakiniku",
+    crepes: "Crepes", bistro: "Bistro", filipino_spanish: "Filipino-Spanish", fast_food: "Fast food",
+    food_hall: "Food hall", filipino_inasal: "Inasal", filipino_snacks: "Merienda",
+    filipino_grill: "Filipino grill", food_court: "Food court", filipino_dampa: "Dampa-style",
+    filipino_silog: "Silog", chicken: "Fried chicken", thai: "Thai"
+  };
+
+  var LATE = /24h|till 1 AM|till 2 AM|till 5 AM/i;
+
+  var PLACES = RAW.map(function (r) {
+    return {
+      id: r[0], name: r[1], rating: r[3], count: r[4], price: r[5],
+      cuisine: r[6], km: r[7], mode: r[8], tier: r[9], note: r[10],
+      late: LATE.test(r[10]),
+      mins: Math.round(r[7] * 12),
+      url: "https://www.google.com/maps/place/?q=place_id:" + r[2]
+    };
+  });
+
+  /* ---------------- state ---------------- */
+
+  var tier = "any";        /* the only filter */
+  var served = {};         /* spin behaviour, not a filter: no repeats until the pot empties */
+  var history = [];
+  var locked = false;      /* once the board speaks, the round is over */
+  var spinning = false;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var board = $("board"), reel = $("reel"), subline = $("subline"), eyebrow = $("eyebrow");
+  var spinBtn = $("spin"), verdictTag = $("verdict"), ticket = $("ticket");
+  var newRound = $("newround"), foot = $("foot");
+
+  function eligible() {
+    return PLACES.filter(function (p) { return tier === "any" || p.tier === tier; });
+  }
+
+  function pool() {
+    var all = eligible();
+    var fresh = all.filter(function (p) { return !served[p.id]; });
+    if (fresh.length) return { list: fresh, refilled: false };
+    served = {};
+    return { list: all, refilled: true };
+  }
+
+  function plural(n, one, many) { return n + " " + (n === 1 ? one : many); }
+
+  function tierWord() {
+    return tier === "expensive" ? "payday picks" : tier === "affordable" ? "tipid picks" : "places";
+  }
+
+  function refreshPot() {
+    var list = eligible();
+    var near = Math.min.apply(null, list.map(function (p) { return p.km; }));
+    var far = Math.max.apply(null, list.map(function (p) { return p.km; }));
+    $("potcount").innerHTML = "<b>" + list.length + "</b> " + tierWord() +
+      " in the pot &middot; " + near.toFixed(2) + "&ndash;" + far.toFixed(2) + " km out";
+
+    spinBtn.disabled = spinning || locked;
+    if (locked || spinning) return;
+
+    reel.className = "reel idle";
+    reel.textContent = "Pull the lever";
+    subline.textContent = plural(list.length, "place", "places") +
+      " within walking or delivery range. One of them is lunch.";
+  }
+
+  function renderTicket(p) {
+    $("tName").textContent = p.name;
+    $("tCuisine").textContent = CUISINE_LABEL[p.cuisine] || p.cuisine;
+    $("tRating").innerHTML = p.rating.toFixed(1) + '★ <span class="unit">(' + p.count + ")</span>";
+    $("tDist").innerHTML = p.km.toFixed(2) + ' <span class="unit">km</span>';
+
+    var walkWrap = $("tWalkWrap");
+    if (p.mode === "walkable") {
+      walkWrap.classList.remove("warn");
+      walkWrap.querySelector("dt").textContent = "On foot";
+      $("tWalk").innerHTML = "~" + p.mins + ' <span class="unit">min</span>';
+    } else {
+      walkWrap.classList.add("warn");
+      walkWrap.querySelector("dt").textContent = "Getting there";
+      $("tWalk").innerHTML = 'Ride or deliver <span class="unit">(~' + p.mins + " min walk)</span>";
+    }
+
+    var money = "";
+    for (var i = 0; i < p.price; i++) money += "₱";
+    $("tPrice").innerHTML = money + ' <span class="unit">' +
+      (p.tier === "expensive" ? "payday" : "tipid") + (p.late ? " &middot; open late" : "") + "</span>";
+
+    $("tNote").textContent = p.note;
+    $("tMap").href = p.url;
+    ticket.hidden = false;
+  }
+
+  function renderHistory() {
+    foot.hidden = history.length === 0;
+    Array.prototype.slice.call(foot.querySelectorAll(".hchip")).forEach(function (el) { el.remove(); });
+    history.slice(0, 8).forEach(function (p, i) {
+      var el = document.createElement("span");
+      el.className = "hchip";
+      el.innerHTML = '<span class="n">' + (history.length - i) + "</span> " + p.name;
+      foot.insertBefore(el, newRound);
+    });
+  }
+
+  /* ---------------- the spin ---------------- */
+
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function spin() {
+    if (spinning || locked) return;
+    var res = pool();
+    if (!res.list.length) return;
+
+    var winner = res.list[Math.floor(Math.random() * res.list.length)];
+    var faces = eligible();
+
+    spinning = true;
+    spinBtn.disabled = true;
+    verdictTag.hidden = true;
+    ticket.hidden = true;
+    board.classList.remove("won");
+    board.classList.add("hot");
+    reel.className = "reel";
+    eyebrow.textContent = "Shaking the pot…";
+    subline.textContent = res.refilled
+      ? "Pot was empty — everyone's back in."
+      : plural(res.list.length, "candidate", "candidates") + " in play";
+
+    var delay = reduced ? 90 : 42;
+    var budget = reduced ? 360 : 2400;
+    var elapsed = 0;
+
+    function tick() {
+      if (elapsed >= budget) return land(winner);
+      reel.textContent = faces[Math.floor(Math.random() * faces.length)].name;
+      elapsed += delay;
+      delay *= 1.115;
+      setTimeout(tick, delay);
+    }
+    tick();
+
+    function land(p) {
+      spinning = false;
+      locked = true;
+      served[p.id] = true;
+      history.unshift(p);
+      board.classList.remove("hot");
+      board.classList.add("won");
+      reel.className = "reel";
+      reel.textContent = p.name;
+      eyebrow.textContent = "The board has decided";
+      subline.innerHTML = p.mode === "walkable"
+        ? '<span class="tag">Walk it</span> &nbsp;' + p.mins + " min from where you're standing"
+        : '<span class="tag">Order in</span> &nbsp;' + p.km.toFixed(2) + " km out — let it come to you";
+      spinBtn.hidden = true;
+      verdictTag.hidden = false;
+      newRound.hidden = false;
+      renderTicket(p);
+      renderHistory();
+    }
+  }
+
+  function startNewRound() {
+    locked = false;
+    ticket.hidden = true;
+    verdictTag.hidden = true;
+    newRound.hidden = true;
+    spinBtn.hidden = false;
+    board.classList.remove("won");
+    eyebrow.innerHTML = "Tonight's board &middot; Timog strip";
+    refreshPot();
+  }
+
+  $("budget").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-tier]");
+    if (!b) return;
+    tier = b.dataset.tier;
+    Array.prototype.forEach.call(this.children, function (c) {
+      c.setAttribute("aria-pressed", String(c === b));
+    });
+    served = {};
+    refreshPot();
+  });
+
+  newRound.addEventListener("click", startNewRound);
+  spinBtn.addEventListener("click", spin);
+
+  refreshPot();
+})();
+</script>
