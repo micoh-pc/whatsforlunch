@@ -608,7 +608,7 @@
       <div class="lever">
         <button class="spin" id="spin">spin it</button>
         <div class="factbox" id="verdict" hidden>
-          <p class="factlabel">fun fact of the day</p>
+          <p class="factlabel" id="factLabel">fun fact of the day</p>
           <p class="facttext" id="factText"></p>
         </div>
       </div>
@@ -834,7 +834,7 @@
   function here() { return DATASETS[loc]; }
   function originStr() { return here().lat + "," + here().lng; }
 
-  var FACTS = [
+  var TECH_FACTS = [
     "The first computer bug was an actual moth, taped into the Harvard Mark II logbook in 1947.",
     "Grace Hopper built one of the earliest compilers, at a time when the idea that a computer could write its own machine code was dismissed as impossible.",
     "Ray Tomlinson picked the @ symbol for email addresses in 1971 mostly because nobody's name contained it.",
@@ -883,7 +883,61 @@
     "Autocorrect, spellcheck, and search ranking all lean on ideas from information theory that Claude Shannon laid out in 1948."
   ];
 
-  function randomFact() { return FACTS[Math.floor(Math.random() * FACTS.length)]; }
+  var TRAVEL_FACTS = [
+    "The Philippines has 7,641 islands. The old figure of 7,107 was revised upward after a 2016 resurvey found more.",
+    "Binondo in Manila was founded in 1594 and is often called the oldest Chinatown in the world.",
+    "Jeepneys began as surplus American military jeeps left behind after the Second World War.",
+    "Intramuros is the original Manila — a walled city the Spanish built in the late 1500s, most of it flattened in 1945.",
+    "The Philippine flag is the only national flag that is flown upside down in wartime, red field on top.",
+    "The Banaue rice terraces are frequently described as two thousand years old, carved into the mountainside without modern machinery.",
+    "Puerto Princesa's underground river runs for kilometres beneath a mountain and empties directly into the sea.",
+    "Boracay was closed to tourists for six months in 2018 so the island could be cleaned up.",
+    "The Philippine tarsier can rotate its head almost all the way around, and its eyes are each bigger than its brain.",
+    "Antarctica is technically the largest desert on Earth. Deserts are defined by rainfall, not heat.",
+    "The Sahara is roughly the size of the entire United States.",
+    "Russia spans eleven time zones. A domestic flight there can cross more clocks than a transatlantic one.",
+    "Istanbul sits on two continents, with commuters crossing from Europe to Asia on the way to work.",
+    "Australia is wider than the Moon. About 4,000 km across, against the Moon's 3,475 km diameter.",
+    "Canada has the longest coastline of any country, largely thanks to its Arctic islands.",
+    "Alaska is the westernmost and the easternmost US state at once — the Aleutians cross the 180th meridian.",
+    "Parts of Chile's Atacama Desert have no recorded rainfall in the entire history of measurement.",
+    "The Dead Sea is the lowest exposed land on the planet, and its shoreline keeps dropping.",
+    "Iceland has no native mosquitoes, which is unusual for anywhere at that latitude.",
+    "Japan counts more than six thousand islands, most of them uninhabited.",
+    "Bangkok's full ceremonial name runs to over 160 characters and holds the record for the longest place name.",
+    "Nepal runs on UTC+5:45, one of very few countries with a 45-minute offset.",
+    "The international date line bends sharply around island nations so they don't get split across two days.",
+    "The shortest scheduled commercial flight in the world, in Scotland's Orkney Islands, takes under two minutes.",
+    "The Trans-Siberian Railway runs roughly 9,300 km from Moscow to Vladivostok, the longest single rail service anywhere.",
+    "A flight recorder is called a black box but is painted bright orange, so searchers can actually find it.",
+    "Cabin air is drier than most deserts, which is why long flights leave you dehydrated.",
+    "Jet lag is generally worse flying east, because shortening your day is harder on the body than stretching it.",
+    "Canadian airport codes almost all begin with Y — Toronto is YYZ, Vancouver YVR — a leftover from old radio-station conventions.",
+    "Machu Picchu was never found by the Spanish, which is a large part of why it survived intact.",
+    "Petra was carved directly into sandstone cliffs by the Nabataeans, who built an entire city out of the rock face.",
+    "Angkor Wat is the largest religious monument on the planet by land area.",
+    "Venice is built on millions of wooden piles driven into the mud of the lagoon, which hardened underwater instead of rotting.",
+    "Roughly a quarter of the Netherlands sits below sea level, kept dry by an engineered system of dikes and pumps.",
+    "Shinjuku Station in Tokyo handles more passengers than any other station in the world, by a wide margin.",
+    "Mount Everest grows a few millimetres every year, pushed up by the collision of two tectonic plates.",
+    "Hawaii's Big Island packs most of the world's climate zones into a single island.",
+    "Norway's coastline measures tens of thousands of kilometres once you trace every fjord.",
+    "France has been the most visited country in the world for decades, ahead of Spain and the United States.",
+    "Vatican City is the smallest country on Earth and you can walk across it in about twenty minutes.",
+    "King Fahd International in Saudi Arabia covers more land than the entire nation of Bahrain.",
+    "Singapore's Changi Airport has a butterfly garden, a rooftop pool, and an indoor waterfall, and people arrive early on purpose.",
+    "Passports come in essentially four colours — red, blue, green and black — and the choice is usually political or religious.",
+    "The equator crosses thirteen countries, and standing on it means you weigh very slightly less than at the poles.",
+    "Greenland looks enormous on most world maps only because the Mercator projection stretches everything near the poles.",
+    "The word travel shares a root with travail, from an old term for a torture device — early journeys were not enjoyable."
+  ];
+
+  /* tech trivia at Triumph, travel trivia in Sampaloc */
+  function factPool() { return loc === "sampaloc" ? TRAVEL_FACTS : TECH_FACTS; }
+  function randomFact() {
+    var pool = factPool();
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
 
   function buildPlaces(rows) { return rows.map(function (r) {
     var note = r[10];
@@ -1152,6 +1206,7 @@
       board.classList.add("won");
       reel.className = "reel";
       spinBtn.hidden = true;
+      $("factLabel").textContent = loc === "sampaloc" ? "travel fact of the day" : "tech fact of the day";
       $("factText").textContent = randomFact();
       verdictTag.hidden = false;
       newRound.hidden = false;
