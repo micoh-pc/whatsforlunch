@@ -210,6 +210,7 @@
   }
   .potcount b { color: var(--cream); font-weight: 400; }
   .potcount.empty { color: var(--gold); }
+  .potcount .doom { color: var(--red-lit); opacity: .9; }
 
   .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .flag {
@@ -582,7 +583,6 @@
         <button class="plate" data-band="any" aria-pressed="true">no thoughts, just food<span class="sub">all 103</span></button>
         <button class="plate" data-band="tipid" aria-pressed="false">broke era<span class="sub">under &#8369;300</span></button>
         <button class="plate" data-band="payday" aria-pressed="false">payday, let's go<span class="sub">over &#8369;400</span></button>
-        <button class="plate" data-band="fasting" aria-pressed="false">fasting<span class="sub">respect</span></button>
       </div>
     </div>
 
@@ -959,7 +959,10 @@
 
   /* ---------------- state ---------------- */
 
-  var band = "any";        /* layer 01 — payday / tipid / fasting */
+  var band = "any";        /* layer 01 — payday / tipid */
+
+  /* fasting is not a filter. it is a 1-in-20 act of god, rolled on every spin. */
+  var FASTING_ODDS = 0.05;
   var reach = "any";       /* layer 02 — how far you'll travel */
   var served = {};         /* spin behaviour, not a filter: no repeats until the pot empties */
   var history = [];
@@ -981,7 +984,6 @@
   };
 
   function eligible() {
-    if (band === "fasting") return [];
     var r = REACH_RANGE[reach];
     return PLACES.filter(function (p) {
       if (band !== "any" && p.band !== band) return false;
@@ -1003,6 +1005,7 @@
     return band === "payday" ? "payday picks" : band === "tipid" ? "tipid picks" : "spots";
   }
 
+
   function reachWord() {
     return reach === "building" ? "in this building"
       : reach === "500" ? "within a 500 m walk"
@@ -1023,14 +1026,14 @@
   function refreshCounts() {
     Array.prototype.forEach.call($("budget").children, function (c) {
       var b = c.dataset.band, sub = c.querySelector(".sub");
-      if (!sub || b === "fasting") return;
+      if (!sub) return;
       if (b === "any") sub.textContent = "all " + PLACES.length;
       else sub.innerHTML = (b === "tipid" ? "under &#8369;300" : "over &#8369;400");
     });
     Array.prototype.forEach.call($("reach").children, function (c) {
       var r = c.dataset.reach, sub = c.querySelector(".sub");
       if (!sub) return;
-      var n = band === "fasting" ? 0 : countFor(band, r);
+      var n = countFor(band, r);
       sub.innerHTML = REACH_LABEL[r] + ' <span class="cnt' + (n ? "" : " zero") + '">' + n + "</span>";
     });
   }
@@ -1039,20 +1042,18 @@
     var list = eligible();
     var pot = $("potcount");
     refreshCounts();
-    var fasting = band === "fasting";
-    var empty = !fasting && list.length === 0;
+    var empty = list.length === 0;
 
     pot.classList.toggle("empty", empty);
-    if (fasting) {
-      pot.innerHTML = "<b>0</b> spots in the pot &middot; nothing out here but resolve";
-    } else if (empty) {
+    if (empty) {
       pot.innerHTML = "<b>0</b> " + bandWord() + " " + reachWord() +
         " &middot; the canteen doesn't do wagyu";
     } else {
       var near = Math.min.apply(null, list.map(function (p) { return p.km; }));
       var far = Math.max.apply(null, list.map(function (p) { return p.km; }));
       pot.innerHTML = "<b>" + list.length + "</b> " + bandWord() + " " + reachWord() +
-        " &middot; " + near.toFixed(2) + "&ndash;" + far.toFixed(2) + " km out";
+        " &middot; " + near.toFixed(2) + "&ndash;" + far.toFixed(2) + " km out" +
+        ' &middot; <span class="doom">1-in-20 nobody eats</span>';
     }
 
     spinBtn.disabled = spinning || locked || empty;
@@ -1060,11 +1061,9 @@
 
     reel.className = "reel idle";
     reel.textContent = empty ? "nothing, sorry" : "spin to find out";
-    subline.textContent = fasting
-      ? "the board still spins. it always spins."
-      : empty
-        ? "loosen one of the two above and try again."
-        : plural(list.length, "spot", "spots") + " " + reachWord() + ". one of them is lunch.";
+    subline.textContent = empty
+      ? "loosen one of the two above and try again."
+      : plural(list.length, "spot", "spots") + " " + reachWord() + ". probably one of them is lunch.";
   }
 
   function renderTicket(p) {
@@ -1136,13 +1135,14 @@
   function spin() {
     if (spinning || locked) return;
 
-    var fasting = band === "fasting";
-    var res = fasting ? { list: PLACES, refilled: false } : pool();
+    var res = pool();
     if (!res.list.length) return;
 
-    /* fasting still reels past every temptation on the strip before it lands */
+    /* the roll — nobody gets told until the reel lands */
+    var fasting = Math.random() < FASTING_ODDS;
     var winner = fasting ? null : res.list[Math.floor(Math.random() * res.list.length)];
-    var faces = fasting ? PLACES : eligible();
+    var faces = eligible();
+    if (!faces.length) faces = res.list;
 
     spinning = true;
     spinBtn.disabled = true;
@@ -1151,12 +1151,10 @@
     board.classList.remove("won");
     board.classList.add("hot");
     reel.className = "reel";
-    eyebrow.textContent = fasting ? "tempting you anyway…" : "let it cook…";
-    subline.textContent = fasting
-      ? "every single one of them, and none of them."
-      : res.refilled
-        ? "pot ran dry — everyone's back in."
-        : plural(res.list.length, "spot", "spots") + " in play";
+    eyebrow.textContent = "let it cook…";
+    subline.textContent = res.refilled
+      ? "pot ran dry — everyone's back in."
+      : plural(res.list.length, "spot", "spots") + " in play";
 
     var delay = reduced ? 90 : 42;
     var budget = reduced ? 360 : 2400;
@@ -1214,10 +1212,10 @@
       if (fasting) {
         current = null;
         copyBtn.hidden = true;
-        reel.textContent = "water";
-        eyebrow.textContent = "respect the grind";
-        subline.innerHTML = '<span class="tag">tubig lang</span> &nbsp;free, 0.00 km, no queue. discipline is crazy.';
-        history.unshift({ name: "water (fasting)" });
+        reel.textContent = "nobody eats";
+        eyebrow.textContent = "the board has other plans";
+        subline.innerHTML = '<span class="tag">everybody fasts</span> &nbsp;tubig lang. you did not pick this and you cannot unpick it.';
+        history.unshift({ name: "nobody eats" });
         renderHistory();
         return;
       }
@@ -1264,11 +1262,7 @@
     });
   }
 
-  wireRow("budget", "band", function (v) {
-    band = v;
-    /* distance is meaningless when you're not eating */
-    $("reachRow").style.opacity = v === "fasting" ? "0.4" : "";
-  });
+  wireRow("budget", "band", function (v) { band = v; });
 
   wireRow("reach", "reach", function (v) { reach = v; });
 
