@@ -190,6 +190,7 @@
     animation: chase 1.1s steps(11) infinite;
   }
   .board.hot .bulbs { --bulb: var(--red-lit); animation-duration: .22s; }
+  .board.tease .bulbs { --bulb: var(--red-lit); animation-duration: .85s; }
   .board.won .bulbs { --bulb: var(--red-lit); animation: flash .16s steps(2) 8; }
   @keyframes chase { to { background-position: 22px 0, -22px 100%, 0 -22px, 100% 22px; } }
   @keyframes flash { 50% { opacity: .15; } }
@@ -231,6 +232,13 @@
     text-shadow: 0 0 26px rgba(226, 75, 80, 0.2);
   }
   .board.hot .reel { color: var(--red-lit); opacity: .82; filter: blur(0.4px); }
+  .board.tease .reel {
+    color: var(--cream);
+    opacity: 1;
+    filter: none;
+    transform: scale(0.985);
+    transition: transform .18s ease-out;
+  }
   .board.won .reel {
     color: var(--red-lit);
     text-shadow: 0 0 38px rgba(226, 75, 80, 0.45);
@@ -275,19 +283,51 @@
   .spin:active { transform: translateY(4px); box-shadow: 0 1px 0 #6A1216; }
   .spin:disabled { background: var(--edge); color: var(--grey-2); box-shadow: none; cursor: wait; }
 
-  .verdict {
-    font-family: var(--font-display);
-    font-size: 15px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--red-lit);
-    border: 2px solid var(--red-dim);
+  .factbox {
+    max-width: 46ch;
+    border: 1px dashed var(--red-dim);
     border-radius: var(--r);
-    padding: 8px 18px 6px;
-    transform: rotate(-1.4deg);
+    padding: 11px 16px 12px;
+    transform: rotate(-0.5deg);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: pop .3s ease-out;
+  }
+  .factbox[hidden] { display: none; }
+  @keyframes pop { from { opacity: 0; transform: rotate(-0.5deg) translateY(6px); } }
+  .factlabel {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
     margin: 0;
   }
-  .verdict[hidden] { display: none; }
+  .facttext {
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: var(--cream);
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .copybtn {
+    appearance: none;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--cream);
+    background: transparent;
+    border: 1px solid var(--grey-2);
+    border-radius: var(--r);
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: color .12s, border-color .12s;
+  }
+  .copybtn:hover { color: var(--red-lit); border-color: var(--red); }
+  .copybtn.done { color: var(--gold); border-color: var(--gold); }
 
   /* ---------- ticket ---------- */
 
@@ -354,6 +394,50 @@
   .stat dd .unit { color: var(--grey); font-size: 11.5px; }
   .stat.warn dd { color: var(--gold); }
 
+  .minimap {
+    margin-top: 16px;
+    border: 1px dashed var(--edge);
+    border-radius: var(--r);
+    padding: 12px 12px 8px;
+    background: rgba(255, 255, 255, 0.012);
+  }
+  .minimap svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .minimap .ring { fill: none; stroke: #3A2427; stroke-width: 1; stroke-dasharray: 3 5; }
+  .minimap .rt {
+    fill: none;
+    stroke: var(--red-lit);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-dasharray: 7 4;
+  }
+  .minimap .rt-ghost {
+    fill: none;
+    stroke: var(--red-dim);
+    stroke-width: 3.2;
+    stroke-linecap: round;
+    opacity: .45;
+  }
+  .minimap .pin { fill: none; stroke: var(--cream); stroke-width: 1.6; stroke-linecap: round; }
+  .minimap .pin-x { fill: none; stroke: var(--gold); stroke-width: 2; stroke-linecap: round; }
+  .minimap .needle { fill: none; stroke: var(--grey-2); stroke-width: 1.4; stroke-linecap: round; }
+  .minimap text {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    fill: var(--grey);
+  }
+  .minimap text.you { fill: var(--cream); }
+  .minimap text.dest { fill: var(--gold); }
+  .minimap text.tick { font-size: 8.5px; fill: var(--grey-2); }
+  .mapcap {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--grey-2);
+    text-align: center;
+    margin: 8px 0 0;
+    font-variant-numeric: tabular-nums;
+  }
+
   .note {
     margin: 16px 0 0;
     padding-top: 15px;
@@ -363,7 +447,7 @@
     max-width: 62ch;
   }
   .note::before {
-    content: "The word on it — ";
+    content: "word on the street — ";
     color: var(--grey-2);
     font-size: 11px;
     letter-spacing: 0.14em;
@@ -463,42 +547,45 @@
 
   <header class="topbar">
     <h1 class="brand">What's for <em>lunch</em>?</h1>
-    <p class="whereami">Standing at <b>Timog &times; Sgt. Esguerra</b>, Diliman</p>
+    <p class="whereami">you are here &rarr; <b>Triumph Building</b></p>
   </header>
 
   <section class="filters">
     <div class="question">
-      <h2><span class="layer">01</span>Is it payday?</h2>
+      <h2><span class="layer">01</span>how's the wallet?</h2>
       <div class="plates" id="budget">
-        <button class="plate" data-band="any" aria-pressed="true">Surprise me<span class="sub">all 103</span></button>
-        <button class="plate" data-band="tipid" aria-pressed="false">Not payday<span class="sub">under &#8369;300</span></button>
-        <button class="plate" data-band="payday" aria-pressed="false">Payday<span class="sub">over &#8369;400</span></button>
-        <button class="plate" data-band="fasting" aria-pressed="false">Fasting<span class="sub">godspeed</span></button>
+        <button class="plate" data-band="any" aria-pressed="true">no thoughts, just food<span class="sub">all 103</span></button>
+        <button class="plate" data-band="tipid" aria-pressed="false">broke era<span class="sub">under &#8369;300</span></button>
+        <button class="plate" data-band="payday" aria-pressed="false">payday, let's go<span class="sub">over &#8369;400</span></button>
+        <button class="plate" data-band="fasting" aria-pressed="false">fasting<span class="sub">respect</span></button>
       </div>
     </div>
 
     <div class="question" id="reachRow">
-      <h2><span class="layer">02</span>How far are you willing to go?</h2>
+      <h2><span class="layer">02</span>how far are you moving?</h2>
       <div class="plates" id="reach">
-        <button class="plate" data-reach="building" aria-pressed="false">This building<span class="sub">0 min</span></button>
-        <button class="plate" data-reach="500" aria-pressed="false">Walking<span class="sub">&le; 500 m</span></button>
-        <button class="plate" data-reach="1000" aria-pressed="false">Short trip<span class="sub">&le; 1 km</span></button>
-        <button class="plate" data-reach="any" aria-pressed="true">Anywhere<span class="sub">&le; 1.36 km</span></button>
+        <button class="plate" data-reach="building" aria-pressed="false">not leaving<span class="sub">this building</span></button>
+        <button class="plate" data-reach="500" aria-pressed="false">quick walk<span class="sub">0&ndash;500 m</span></button>
+        <button class="plate" data-reach="1000" aria-pressed="false">short trip<span class="sub">500 m &ndash; 1 km</span></button>
+        <button class="plate" data-reach="any" aria-pressed="true">anywhere<span class="sub">full send</span></button>
       </div>
     </div>
 
-    <p class="potcount" id="potcount"><b>103</b> places in the pot &middot; 0.00&ndash;1.35 km out</p>
+    <p class="potcount" id="potcount"><b>103</b> spots in the pot &middot; 0.00&ndash;1.35 km out</p>
   </section>
 
   <main class="board" id="board">
     <div class="bulbs"></div>
     <div class="screen">
-      <p class="eyebrow" id="eyebrow">Tonight's board &middot; Timog strip</p>
-      <p class="reel idle" id="reel" aria-live="polite">Pull the lever</p>
+      <p class="eyebrow" id="eyebrow">today's lineup &middot; timog strip</p>
+      <p class="reel idle" id="reel" aria-live="polite">spin to find out</p>
       <p class="subline" id="subline">45 places within walking or delivery range. One of them is lunch.</p>
       <div class="lever">
-        <button class="spin" id="spin">Spin it</button>
-        <p class="verdict" id="verdict" hidden>The board has spoken</p>
+        <button class="spin" id="spin">spin it</button>
+        <div class="factbox" id="verdict" hidden>
+          <p class="factlabel">fun fact of the day</p>
+          <p class="facttext" id="factText"></p>
+        </div>
       </div>
     </div>
   </main>
@@ -513,21 +600,27 @@
       </span>
     </div>
     <dl class="stats">
-      <div class="stat"><dt>Rating</dt><dd id="tRating"></dd></div>
-      <div class="stat"><dt>Distance</dt><dd id="tDist"></dd></div>
-      <div class="stat" id="tWalkWrap"><dt>On foot</dt><dd id="tWalk"></dd></div>
-      <div class="stat"><dt>Per head</dt><dd id="tPrice"></dd></div>
+      <div class="stat"><dt>stars</dt><dd id="tRating"></dd></div>
+      <div class="stat"><dt>how far</dt><dd id="tDist"></dd></div>
+      <div class="stat" id="tWalkWrap"><dt>walk time</dt><dd id="tWalk"></dd></div>
+      <div class="stat"><dt>the damage</dt><dd id="tPrice"></dd></div>
     </dl>
+    <div class="minimap" id="minimap">
+      <div id="mapArt"></div>
+      <p class="mapcap" id="mapCap"></p>
+    </div>
     <p class="note" id="tNote"></p>
     <div class="actions">
-      <a class="lockin" id="tMap" href="#" target="_blank" rel="noopener">Open in Maps</a>
-      <p class="stamp">No take-backs</p>
+      <a class="lockin" id="tMap" href="#" target="_blank" rel="noopener">take me there</a>
+      <a class="copybtn" id="tRoute" href="#" target="_blank" rel="noopener">walking route</a>
+      <button class="copybtn" id="tCopy">copy for the gc</button>
+      <p class="stamp">no rerolls, no crying</p>
     </div>
   </section>
 
   <footer class="foot" id="foot" hidden>
-    <p class="label">Already called</p>
-    <button class="linkbtn" id="newround" hidden>Clear the board, new round</button>
+    <p class="label">already eaten</p>
+    <button class="linkbtn" id="newround" hidden>clear it, new round</button>
   </footer>
 
 </div>
@@ -536,128 +629,280 @@
 (function () {
   "use strict";
 
-  /* id, name, place_id, rating, count, price_level, cuisine, km, mode, tier, note */
-  /* id, name, place_id, rating, count, band, low_php, high_php, km, mode, note */
+  /* id, name, place_id, rating, count, band, low_php, high_php, km, mode, note, lat, lng */
   var RAW = [
-    [1,"Michael Dubois Restaurant","ChIJWcoEMtG3lzMRKRlnmBA7vcg",4.9,94,"payday",3000,5000,0.569,"delivery","13-course French tasting menu. Reserve ahead."],
-    [2,"Fresh International Buffet | Solaire","ChIJMw9ZWgC3lzMRitb-eX2ejco",3.8,139,"payday",2500,3500,0.872,"delivery","Lobster buffet, Solaire North."],
-    [3,"Finestra | Solaire Resort QC","ChIJf021RwC3lzMRoTWNNXi5S3E",4.1,36,"payday",1500,2500,0.872,"delivery","38th floor Italian, city-light views."],
-    [4,"Tokyo Gyu Japanese Yakiniku","ChIJsd_EsDrJlzMRrYYvG04LE9Y",3.8,92,"payday",900,1500,0.905,"delivery","Wagyu, tablet ordering."],
-    [5,"Melo's Restaurant","ChIJz2hhuau3lzMRqgML5ElmykQ",4.3,216,"payday",900,1800,0.348,"walkable","Certified Angus and Wagyu."],
-    [6,"Gulliver's Prime Ribs of Beef","ChIJX1uljFO2lzMREm1y-RRkukI",4.4,257,"payday",900,1400,0.602,"delivery","~5k for 4 pax per reviews. Sides included."],
-    [7,"Stoned Steaks - Tomas Morato","ChIJD-e0W623lzMRIM5O74eYuCM",4.5,480,"payday",800,1500,0.471,"walkable","Unlimited wagyu ribeye option."],
-    [8,"Wildflour Restaurant - QC","ChIJ93T3JEK3lzMRjp_L04uJmsk",4.7,1578,"payday",800,1500,0.644,"delivery","~7k for 4 pax per reviews. Bread discounts after 7 PM."],
-    [9,"Skybar | Solaire Resort North","ChIJdZDQYQC3lzMRqslS8uG6eNg",4.4,38,"payday",800,1500,0.872,"delivery","38F rooftop, 360-degree views."],
-    [10,"Trattoria e Dolci | Solaire North","ChIJ05lgg_m3lzMRIjGOA6JWkAU",4.0,34,"payday",800,1500,0.872,"delivery","Open till 2 AM."],
-    [11,"Simon's Steakhouse","ChIJlcMg3ay3lzMRv34gpFlzwaw",4.3,102,"payday",800,1400,0.537,"delivery","1kg aged angus porterhouse."],
-    [12,"Johnny's Steak and Grill","ChIJ0zS_cVK2lzMRpai8c1JApGQ",4.3,63,"payday",800,1300,0.874,"delivery","Hotel restaurant. Closed Mondays."],
-    [13,"Cafe Mangrove | Solaire QC","ChIJfcYbFQC3lzMRFerf1wSEYJo",4.2,52,"payday",700,1200,0.872,"delivery","Breakfast is the standout."],
-    [14,"Escobar's Steakhouse","ChIJu1y11U23lzMRGn9h_TIuHXc",4.8,1768,"payday",700,1200,0.542,"delivery","Best-rated steak in range. Truffle pasta."],
-    [15,"Black Bull Steakhouse and Bar","ChIJT1rJXwC3lzMRoxyV-UMqV6E",4.3,59,"payday",700,1200,1.048,"delivery","Ayala Malls Vertis North."],
-    [16,"Baboy Grill","ChIJA-1Uj023lzMRl4w4ScbNe8w",4.9,257,"payday",700,1200,0.904,"delivery","Premium non-unli KBBQ. Open till 5 AM."],
-    [17,"Sambo Kojin - West Avenue","ChIJa9vwFFG2lzMR9vqS7U9jv7o",4.2,1098,"payday",800,1000,0.915,"delivery","Buffet. Recent reviews flag cleanliness."],
-    [18,"Grills & Sizzles Steakhouse","ChIJQ6TBI1W2lzMRQjFBSnOOE-A",4.0,193,"payday",600,1000,0.203,"walkable","Buffet P749-989. Google tags it cheap but the bill is not."],
-    [19,"Prologue QC","ChIJbdLp0bK3lzMR2FFGw-HM4Zg",4.3,523,"payday",500,800,1.083,"delivery","Small portions for the price per reviews."],
-    [20,"Deer Claus Steakhouse","ChIJ_ct6SgC3lzMREwlZhW-rY8k",4.7,78,"payday",500,800,1.337,"delivery","Closed Mondays. Kitchen runs slow."],
-    [21,"HODAI Unli BBQ & Seafood Grill","ChIJKdfdzPO3lzMRFpc8dykkLEc",4.6,2962,"payday",500,700,0.64,"delivery","Best-value unli samgyup nearby."],
-    [22,"Yoshimeatsu Tomas Morato","ChIJqcp7lGa3lzMR4cSLcnj4A2Q",4.2,711,"payday",500,700,1.021,"delivery","QR-code unli samgyup, free ice cream."],
-    [23,"Tablo Kitchen x Cafe Timog QC","ChIJ7xmAijG3lzMRJQcB1BHsFqs",4.6,1856,"payday",500,900,0.516,"delivery","~1800 for 2 per reviews. Portions good for 2-3."],
-    [24,"Delgado.112","ChIJX0J4aWS3lzMRvw4vDOUsfCw",4.6,1129,"payday",450,750,1.316,"delivery","Heritage house. Crispy pata, truffle croquetas."],
-    [25,"Plana's Pantry","ChIJ5z4E7aq3lzMRUd01cZi-t4s",4.5,331,"payday",400,700,0.174,"walkable","Hickory BBQ ribs, handcrafted ice cream."],
-    [26,"Causeway Seafood Restaurant","ChIJT_6dcq23lzMR0hlIATcEqRs",4.3,740,"payday",400,700,0.791,"delivery","Dim sum. Reviews call it pricey for families."],
-    [27,"Amici - Tomas Morato","ChIJyW8KxLK3lzMRipTy-35pVm8",4.7,748,"payday",400,650,1.065,"delivery","Italian + gelato. Solo Fiesta set is the cheap route."],
-    [28,"Ombu Kusina","ChIJYcx5SFK2lzMRRV4QIGTbBmI",4.7,1955,"payday",350,550,0.753,"delivery","GAP CALL. Pet-friendly, opens 6:30 AM. Crispy pata pushes it up."],
-    [29,"Matzzip Korean Restaurant","ChIJOwwaIFK2lzMRZSeawnBCXls",4.7,103,"payday",350,500,0.868,"delivery","GAP CALL. Authentic non-unli Korean, owner-run."],
-    [30,"Crepe Central","ChIJgxaqdqu3lzMRTyoheiO9K9w",4.4,481,"payday",350,500,0.988,"delivery","GAP CALL. B1G1 cocktails Fri/Sat drops the effective spend."],
-    [31,"Vinta Modern Carinderia","ChIJE2b2Yru3lzMRw9EVStTDh6A",4.5,220,"payday",300,500,0.501,"delivery","GAP CALL. Veg dishes cheap, meat dishes push past 400."],
-    [32,"Lola Ote Restaurant","ChIJ6_Xznq63lzMR3P8q3NDQ8Z4",4.5,740,"payday",300,450,0.848,"delivery","GAP CALL. Kare-kare, pork BBQ. Breakfast 7-10 AM only."],
-    [33,"Mango Tree Cafe | Trinoma","ChIJX23wpQK3lzMRdKufBjQPA4M",4.5,226,"payday",600,900,1.338,"delivery","Thai. Reviews repeatedly call it overpriced; go for the mango sticky rice."],
-    [34,"Half Saints","ChIJR8aRrKu3lzMRjDGVIaK7kzY",4.5,580,"payday",600,1000,0.269,"walkable","Small plates, tasting-menu energy. Small space, reserve."],
-    [35,"Sam Stew, Vertis North","ChIJY7IZSaS3lzMRyV8I1Fj465Y",4.9,4862,"payday",700,900,1.237,"delivery","Unli Korean BBQ + hotpot buffet. 4,862 reviews at 4.9."],
-    [36,"American Backyard - Grandia","ChIJh5sblMy3lzMR0D_MS8trQTw",4.7,236,"payday",500,900,0.204,"walkable","Pasta finished in a parmesan wheel. Long waits, limited parking."],
-    [37,"Livestock","ChIJnQR8BKy3lzMRZ-usMpRwvUM",4.5,803,"payday",500,800,0.695,"delivery","Crispy pata specialist. Crispy ulo is better value than the pata."],
-    [38,"Tablo Bistro","ChIJF1M1SQC3lzMR5SXw7lGpoaw",4.6,133,"payday",500,800,0.504,"delivery","Sister to Tablo Kitchen. Four-cheese truffle flatbread."],
-    [39,"SOME THAI","ChIJM7Ujx8e3lzMRQ7ahPSJONLA",4.7,1994,"payday",500,800,1.033,"delivery","Michelin-listed. Crab curry. Group must be complete to be seated."],
-    [40,"Botejyu Trinoma","ChIJ7WU3PEO3lzMRs0qAqTf69GI",4.8,639,"payday",500,800,1.254,"delivery","Okonomiyaki and yakisoba. Bundle for 4 is the value play."],
-    [41,"Shrimp Bucket Trinoma","ChIJmwOmtGy3lzMRpvkjt9q4TUg",4.8,251,"payday",500,800,1.251,"delivery","Reviewers call it pricey; value meals exist."],
-    [42,"Smokes and Bones","ChIJ-VOHTGq3lzMRNAN8Rc3nDyE",4.9,106,"payday",500,800,0.846,"delivery","4.9 stars. BBQ ribs and smoked beef belly. Opens 2:30 PM."],
-    [43,"Flash Ramen","ChIJlWnEroa3lzMRxagKuJePZzQ",4.5,195,"payday",350,550,0.474,"walkable","GAP CALL. Solo booths. Reviews split hard on whether food matches price."],
-    [44,"Mom and Tina's Bakery Cafe","ChIJrbqjuqu3lzMRVR8F3TfMkFo",4.4,474,"payday",350,550,0.344,"walkable","GAP CALL. Roast beef is good but priced up. Cupcakes, all-day breakfast."],
-    [45,"Borro","ChIJW5VNT_m3lzMR1zftyhLgIoU",4.4,1020,"payday",400,700,0.524,"delivery","Three floors, opens 7 AM. Boneless fried chicken is the pick, skip the steak."],
-    [46,"King Chef Seafood - West Ave","ChIJ9yHcGE63lzMRPOpghmojsJ4",4.4,553,"payday",400,700,1.042,"delivery","Banquet-style Chinese. Peking duck. Discounted dimsum in the afternoon."],
-    [47,"Sourdough Cafe Tomas Morato","ChIJ74ykOiK3lzMRUngFXFVqJZs",4.6,624,"payday",400,700,1.288,"delivery","Lobster bisque with sourdough. Opens 8 AM weekends."],
-    [48,"Dylan Patisserie QC","ChIJcZTuy-y3lzMR4zr8pl5skP8",4.7,1089,"payday",400,700,1.353,"delivery","Farthest on the list. Reviews split: great looks, mixed taste."],
-    [49,"Mama Lou's Italian Kitchen - Vertis","ChIJ03GXVwK3lzMROEMW3s-3Ic0",4.8,2252,"payday",400,650,1.096,"delivery","Complimentary bread. Generous portions."],
-    [50,"Under the Balete","ChIJobnUla63lzMRzRKRiZJXj2g",4.6,222,"payday",400,650,0.859,"delivery","Pet-friendly, wide parking. P199 special menu Fri-Sun before 11:30 AM."],
-    [51,"Al Carbon Mexican Grill by PK","ChIJX_kOhxW3lzMRKj0mH_2JEwo",4.8,145,"payday",400,650,0.817,"delivery","Rare good Mexican in the area. Barbacoa quesadilla. Sells vinyl too."],
-    [52,"LOLA Cafe - Tomas Morato","ChIJMxUhIEy2lzMRHllLPcMLtAI",4.4,1021,"payday",400,650,1.303,"delivery","Filipino-fusion. Kare-kare rice bowl. Reserve for 5+."],
-    [53,"Hap Chan West Avenue","ChIJvYf5VP-2lzMRtJrhShvN5QE",4.3,623,"payday",350,500,0.792,"delivery","GAP CALL. Dim sum. Recent reviews flag shrinking portions and slow service."],
-    [54,"Ramen Yushoken QC","ChIJa0_wizy3lzMRGz7EhfZYAtY",4.5,349,"payday",400,600,0.149,"walkable","Second-closest on the whole list. Handmade noodles, best gyoza per reviews."],
-    [55,"Ramen Hiro","ChIJPcPUAQC3lzMRg8CUxWqLNJg",4.6,290,"payday",400,600,0.507,"delivery","Kyoto-style. Duo Special is the value order."],
-    [56,"Ramen Butcher Manila","ChIJwWi2rdG3lzMRVZPkB1mBWis",4.4,681,"payday",400,600,1.196,"delivery","Hakata classic. Big gyoza."],
-    [57,"Sweet Ecstasy","ChIJUzhqGmO3lzMRzXsGgXfF02g",4.5,309,"payday",400,600,0.985,"delivery","Steam burger is the standout. Inside a gas station, ~4 tables."],
-    [58,"Buffalo's Wings N' Things - M-Place","ChIJHVuCDNK3lzMRpOImrY-3d58",3.3,27,"tipid",250,400,0.28,"walkable","Filling meal ~250 per reviews. Roach complaints, 3.3 stars."],
-    [59,"Saigon Corner PH","ChIJexTsB6y3lzMRaTqUZneob7A",4.3,385,"tipid",250,400,0.469,"walkable","GAP CALL. Pho and banh mi. Up the stairs, easy to miss."],
-    [60,"Pepeton's Grill & Catering","ChIJGZ7cEVO2lzMR9Ys9Xk6ElZU",4.4,1022,"tipid",250,400,0.522,"delivery","Bulalo, crispy pata. Sharing dishes. Parking is rough."],
-    [61,"Thai Mango Timog","ChIJHVR2y563lzMRly97HVIE44I",4.7,591,"tipid",200,350,0.863,"delivery","Open 24h. Bagoong rice is the value pick."],
-    [62,"Habit Food Group South Triangle","ChIJk98mvaW3lzMRSjKp-DDxtQo",4.3,44,"tipid",200,350,0.451,"walkable","Six stalls: bowls, breakfast, kebab, bento."],
-    [63,"Foam Coffee Quezon Ave.","ChIJ28lvf--3lzMRhOQtr4l3Ia8",4.7,1146,"tipid",200,350,0.16,"walkable","Open till 2 AM. Pastries P80-95, cheesy buldak."],
-    [64,"JT's Manukan Grille Scout Borromeo","ChIJR5xZDmW3lzMR8mDFKA3ad4c",4.2,103,"tipid",200,300,0.463,"walkable","Open till 1 AM. Inasal ~P243 with rice."],
-    [65,"Drizzled Chicken - Timog","ChIJF43kDAC3lzMRWNHsnzMXbqk",4.8,105,"tipid",180,300,0.859,"delivery","Generous servings, sauce guide."],
-    [66,"Susie's Cuisine Morato","ChIJi7PEiay3lzMRuNfu5Wt_w04",4.2,231,"tipid",150,300,0.481,"walkable","Palabok and kakanin. Closes 7 PM."],
-    [67,"GOODAH!!! Timog","ChIJa9JXcq23lzMRFehLLJB0hKg",3.8,920,"tipid",150,300,0.786,"delivery","Open 24h. Silog cheap, but some mains hit P419."],
-    [68,"Timog Food Plaza","ChIJR9fatFK2lzMRTOdKtteoevU",4.3,415,"tipid",150,300,0.735,"delivery","24h food court. Quality varies a lot by stall."],
-    [69,"Scouter's Eatery","ChIJaxcJHmG3lzMRJ5YqZ45Lmqw",4.4,112,"tipid",150,300,0.742,"delivery","~P200/ulam good for 2-3. Open 24h."],
-    [70,"Jollibee NBS Quezon Ave","ChIJP0ItTNe3lzMR3bc7Qg8QcR0",3.8,118,"tipid",120,250,0.442,"walkable","Open 24h. Alt branches: Scout Tobias (0.68km), Tomas Morato (1.15km)."],
-    [71,"Sangkalan Restaurant","ChIJoQXANSi3lzMRKncsHINqaLg",4.4,440,"tipid",250,400,0.8,"delivery","Filipino, live 70s-80s music. Big portions, free birthday cake."],
-    [72,"Wabi-Sabi Noodle House","ChIJhXRXGa23lzMRnITTSE7ks-E",4.5,310,"tipid",250,400,0.668,"delivery","Fully vegan, muslim-friendly. Tantanmen. Tucked inside a building."],
-    [73,"Kowloon House West Avenue","ChIJ6Xg5QFG2lzMRyoR8xoQzf5g",4.2,1446,"tipid",250,400,0.864,"delivery","Open 24h, has drive-thru. Siopao, crispy noodles."],
-    [74,"Ramen Kuroda Eton Centris","ChIJbQYujqm3lzMR7xhYCuIqVYA",4.4,479,"tipid",250,400,0.63,"delivery","Cheapest decent ramen nearby. Set meals. Broth can run salty."],
-    [75,"Angel's Pizza - Timog","ChIJ2w06YgC3lzMRJNV3SPEtaaA",3.7,78,"tipid",250,400,0.74,"delivery","Open 24h, delivery-oriented. Sushi bake pizza. 3.7 stars, slow service."],
-    [76,"Mum's Lasagna","ChIJaReTzouwlzMRYOaZ1zA-gwI",4.9,396,"tipid",250,400,0.507,"delivery","4.9 stars. Takeaway only, order online ahead. Barkada-size trays."],
-    [77,"the good food.mnl","ChIJQXKck1G3lzMRc_E-f344sbc",5.0,8,"tipid",250,400,0.752,"delivery","Fish and chips, pork steak. Closed Sundays, only 8 reviews."],
-    [78,"Chickey's","ChIJEWd12HG3lzMR-SRagzyzlP8",4.5,113,"tipid",250,400,0.813,"delivery","Bacolod inasal. B1T1 cocktails 5-8 PM. Open till 4 AM Thu-Sat."],
-    [79,"Magdamag Market Cafe","ChIJae7d9PS3lzMRuQLAq1Dxi-Y",4.6,186,"tipid",250,400,0.998,"delivery","Kesong puti grilled cheese ~P280. Free parking. Service is hit-or-miss."],
-    [80,"Mister Kabab West Avenue","ChIJRT8uuFa2lzMRkU1fNNmUnIU",4.5,4894,"tipid",200,350,0.824,"delivery","Open 24h, 4,894 reviews. Kebabs and rice platters. No aircon."],
-    [81,"Kim's Ramyun#1 - Timog","ChIJ4xEDlW3IlzMRGplAsffv8RQ",4.8,1756,"tipid",200,350,1.11,"delivery","Open 24h, self-cook Korean instant noodles. P50 cooking fee, toppings P1/g."],
-    [82,"Salido Restaurant","ChIJOT-qG_y2lzMR6p6zn_alehM",4.3,43,"tipid",200,350,0.812,"delivery","Chinese, opens 7:30 AM. Mami and dimsum. Skip the congee per reviews."],
-    [83,"Burger King Timog","ChIJeyFWRFK2lzMRW8DEmxSRhdE",4.4,1835,"tipid",200,350,0.758,"delivery","Open 24h with drive-thru."],
-    [84,"981 Espresso Bar","ChIJWeaANqO3lzMRdRSXD6-AXJY",4.7,74,"tipid",200,350,0.487,"walkable","Open till 12-1 AM. 2hr wifi, sockets. Cash only, no card payments."],
-    [85,"Kalinaw Coffee Co.","ChIJTbsl0cG3lzMRGZmrlEn8zRg",4.7,57,"tipid",200,350,0.657,"delivery","Open till 11 PM. Wifi, sockets, board games. Work-friendly."],
-    [86,"Disciple Brew","ChIJCRJnGgC3lzMRh1nn1l56dV0",4.9,399,"tipid",200,350,0.731,"delivery","4.9 stars. Rice bowls and coffee. Worship music playing."],
-    [87,"Perene Cakes & Pastries","ChIJ4TCsH3y3lzMRpWSY4qdrhWw",4.8,141,"tipid",200,350,1.112,"delivery","Cheaper than most Vertis cafes. Basil pesto, cakes."],
-    [88,"Bacolod Chicken Parilla","ChIJ2QCgQ062lzMRwoaRgLFYrIg",4.3,938,"tipid",200,350,1.263,"delivery","Charcoal inasal, better than Mang Inasal per reviews. Service and cleanliness complaints."],
-    [89,"3M Pizza Panay Avenue","ChIJ2dYI5q23lzMRE0UBSESiQ8E",4.5,11,"tipid",200,350,0.444,"walkable","Tucked inside the National Bookstore complex. Only 11 reviews."],
-    [90,"Chic-Boy - West Ave","ChIJYWzM6Ae3lzMRF6CIObofUQc",3.3,55,"tipid",180,300,0.798,"delivery","Only remaining Metro branch. Cebu lechon. 3.3 stars, ventilation complaints."],
-    [91,"ZhaHun Chicken Chop - Eton Centris","ChIJNXCsbQC3lzMRKP4EOjs5pMo",4.6,77,"tipid",150,300,0.625,"delivery","Taiwanese chicken chop. P590 for a 5-pc bundle. Gravy costs extra."],
-    [92,"Chef Swakto Quezon City","ChIJt5IhVAC3lzMRQdpf2x4yAOk",4.4,20,"tipid",150,280,0.678,"delivery","Home-style, very cheap. Only 20 reviews and one harsh 1/10."],
-    [93,"Goto Kips","ChIJHTWPvl-3lzMR6X1e5ygvJec",4.7,124,"tipid",150,300,0.894,"delivery","Goto, lomi, pares. Lechon kawali stays crispy. Quiet and clean."],
-    [94,"Serenitea - Tomas Morato","ChIJwc8g9q23lzMRAfHj7nXvnGE",4.6,180,"tipid",150,300,0.9,"delivery","Open till 1 AM. Milk tea plus squid balls. Free wifi, second floor."],
-    [95,"Bean + Butter Co","ChIJX1pgXAC3lzMRjOuTcl9y7uo",5.0,6,"tipid",150,300,0.635,"delivery","Open till midnight. Ube espresso. Only 6 reviews."],
-    [96,"Popeyes - TriNoma","ChIJgy8erG23lzMRKbtO_zS5ukw",4.0,330,"tipid",150,300,1.324,"delivery","4.0 stars with repeated understaffing and cleanliness complaints."],
-    [97,"Tsibog'King","ChIJ8RrE1sa3lzMRfuxQaFyuwBw",4.6,10,"tipid",100,250,0.4,"walkable","Silogan across from Saigon Corner. Cheap and home-made. Closed Sundays."],
-    [98,"Merced Bakehouse and Restaurant","ChIJhQhU9QC3lzMRmtWVCCic-IY",4.4,403,"tipid",100,250,0.479,"walkable","Old-school bakery, closes 5 PM. Beehive and snowball are the classics."],
-    [99,"Estrel's Caramel Cake","ChIJq8cSeU22lzMRVhtg64KYlQg",4.6,1486,"tipid",100,250,0.929,"delivery","Cakes only, not a meal. QC institution. Order ahead, closes 5 PM."],
-    [100,"Chowking Trinoma","ChIJ5bfEfAK3lzMRJyRlD4C4mRg",4.0,747,"tipid",120,250,1.159,"delivery","4.0 stars. Multiple recent complaints about cold food and service."],
-    [101,"JHING CARINDERIA","ChIJSeZevYW3lzMRpTWmtWm4pv8",5.0,1,"tipid",80,200,0.649,"delivery","True carinderia, 5 AM-2 PM only, closed Sundays. Only 1 review - unverified."],
-    [102,"1st Floor","",null,null,"tipid",null,null,0.0,"walkable","In-building. User-supplied, no travel time."],
-    [103,"3rd Floor","",null,null,"tipid",null,null,0.0,"walkable","In-building. User-supplied, no travel time."]
+    [1,"Michael Dubois Restaurant","ChIJWcoEMtG3lzMRKRlnmBA7vcg",4.9,94,"payday",3000,5000,0.569,"delivery","13-course French tasting menu. Reserve ahead.",14.6393936,121.0388894],
+    [2,"Fresh International Buffet | Solaire","ChIJMw9ZWgC3lzMRitb-eX2ejco",3.8,139,"payday",2500,3500,0.872,"delivery","Lobster buffet, Solaire North.",14.6494984,121.0349906],
+    [3,"Finestra | Solaire Resort QC","ChIJf021RwC3lzMRoTWNNXi5S3E",4.1,36,"payday",1500,2500,0.872,"delivery","38th floor Italian, city-light views.",14.6494984,121.0349906],
+    [4,"Tokyo Gyu Japanese Yakiniku","ChIJsd_EsDrJlzMRrYYvG04LE9Y",3.8,92,"payday",900,1500,0.905,"delivery","Wagyu, tablet ordering.",14.6394634,121.0260823],
+    [5,"Melo's Restaurant","ChIJz2hhuau3lzMRqgML5ElmykQ",4.3,216,"payday",900,1800,0.348,"walkable","Certified Angus and Wagyu.",14.6407043,121.0372381],
+    [6,"Gulliver's Prime Ribs of Beef","ChIJX1uljFO2lzMREm1y-RRkukI",4.4,257,"payday",900,1400,0.602,"delivery","~5k for 4 pax per reviews. Sides included.",14.639349,121.0291253],
+    [7,"Stoned Steaks - Tomas Morato","ChIJD-e0W623lzMRIM5O74eYuCM",4.5,480,"payday",800,1500,0.471,"walkable","Unlimited wagyu ribeye option.",14.6381068,121.036485],
+    [8,"Wildflour Restaurant - QC","ChIJ93T3JEK3lzMRjp_L04uJmsk",4.7,1578,"payday",800,1500,0.644,"delivery","~7k for 4 pax per reviews. Bread discounts after 7 PM.",14.6359017,121.034182],
+    [9,"Skybar | Solaire Resort North","ChIJdZDQYQC3lzMRqslS8uG6eNg",4.4,38,"payday",800,1500,0.872,"delivery","38F rooftop, 360-degree views.",14.6494872,121.0350868],
+    [10,"Trattoria e Dolci | Solaire North","ChIJ05lgg_m3lzMRIjGOA6JWkAU",4.0,34,"payday",800,1500,0.872,"delivery","Open till 2 AM.",14.6494984,121.0349906],
+    [11,"Simon's Steakhouse","ChIJlcMg3ay3lzMRv34gpFlzwaw",4.3,102,"payday",800,1400,0.537,"delivery","1kg aged angus porterhouse.",14.6369286,121.0349316],
+    [12,"Johnny's Steak and Grill","ChIJ0zS_cVK2lzMRpai8c1JApGQ",4.3,63,"payday",800,1300,0.874,"delivery","Hotel restaurant. Closed Mondays.",14.635143,121.02968],
+    [13,"Cafe Mangrove | Solaire QC","ChIJfcYbFQC3lzMRFerf1wSEYJo",4.2,52,"payday",700,1200,0.872,"delivery","Breakfast is the standout.",14.6494984,121.0349906],
+    [14,"Escobar's Steakhouse","ChIJu1y11U23lzMRGn9h_TIuHXc",4.8,1768,"payday",700,1200,0.542,"delivery","Best-rated steak in range. Truffle pasta.",14.6388703,121.0382785],
+    [15,"Black Bull Steakhouse and Bar","ChIJT1rJXwC3lzMRoxyV-UMqV6E",4.3,59,"payday",700,1200,1.048,"delivery","Ayala Malls Vertis North.",14.6510699,121.0352236],
+    [16,"Baboy Grill","ChIJA-1Uj023lzMRl4w4ScbNe8w",4.9,257,"payday",700,1200,0.904,"delivery","Premium non-unli KBBQ. Open till 5 AM.",14.6335993,121.0349081],
+    [17,"Sambo Kojin - West Avenue","ChIJa9vwFFG2lzMR9vqS7U9jv7o",4.2,1098,"payday",800,1000,0.915,"delivery","Buffet. Recent reviews flag cleanliness.",14.6391567,121.0260813],
+    [18,"Grills & Sizzles Steakhouse","ChIJQ6TBI1W2lzMRQjFBSnOOE-A",4.0,193,"payday",600,1000,0.203,"walkable","Buffet P749-989. Google tags it cheap but the bill is not.",14.6423788,121.0324167],
+    [19,"Prologue QC","ChIJbdLp0bK3lzMR2FFGw-HM4Zg",4.3,523,"payday",500,800,1.083,"delivery","Small portions for the price per reviews.",14.631962,121.0339554],
+    [20,"Deer Claus Steakhouse","ChIJ_ct6SgC3lzMREwlZhW-rY8k",4.7,78,"payday",500,800,1.337,"delivery","Closed Mondays. Kitchen runs slow.",14.6317677,121.0411743],
+    [21,"HODAI Unli BBQ & Seafood Grill","ChIJKdfdzPO3lzMRFpc8dykkLEc",4.6,2962,"payday",500,700,0.64,"delivery","Best-value unli samgyup nearby.",14.6452621,121.0295],
+    [22,"Yoshimeatsu Tomas Morato","ChIJqcp7lGa3lzMR4cSLcnj4A2Q",4.2,711,"payday",500,700,1.021,"delivery","QR-code unli samgyup, free ice cream.",14.6325506,121.0350111],
+    [23,"Tablo Kitchen x Cafe Timog QC","ChIJ7xmAijG3lzMRJQcB1BHsFqs",4.6,1856,"payday",500,900,0.516,"delivery","~1800 for 2 per reviews. Portions good for 2-3.",14.6373656,121.0324415],
+    [24,"Delgado.112","ChIJX0J4aWS3lzMRvw4vDOUsfCw",4.6,1129,"payday",450,750,1.316,"delivery","Heritage house. Crispy pata, truffle croquetas.",14.6298875,121.0349988],
+    [25,"Plana's Pantry","ChIJ5z4E7aq3lzMRUd01cZi-t4s",4.5,331,"payday",400,700,0.174,"walkable","Hickory BBQ ribs, handcrafted ice cream.",14.6425844,121.0355073],
+    [26,"Causeway Seafood Restaurant","ChIJT_6dcq23lzMR0hlIATcEqRs",4.3,740,"payday",400,700,0.791,"delivery","Dim sum. Reviews call it pricey for families.",14.6356541,121.0302867],
+    [27,"Amici - Tomas Morato","ChIJyW8KxLK3lzMRipTy-35pVm8",4.7,748,"payday",400,650,1.065,"delivery","Italian + gelato. Solo Fiesta set is the cheap route.",14.6321297,121.0345168],
+    [28,"Ombu Kusina","ChIJYcx5SFK2lzMRRV4QIGTbBmI",4.7,1955,"payday",350,550,0.753,"delivery","GAP CALL. Pet-friendly, opens 6:30 AM. Crispy pata pushes it up.",14.6366206,121.0295404],
+    [29,"Matzzip Korean Restaurant","ChIJOwwaIFK2lzMRZSeawnBCXls",4.7,103,"payday",350,500,0.868,"delivery","GAP CALL. Authentic non-unli Korean, owner-run.",14.6361836,121.0284589],
+    [30,"Crepe Central","ChIJgxaqdqu3lzMRTyoheiO9K9w",4.4,481,"payday",350,500,0.988,"delivery","GAP CALL. B1G1 cocktails Fri/Sat drops the effective spend.",14.63283,121.0346851],
+    [31,"Vinta Modern Carinderia","ChIJE2b2Yru3lzMRw9EVStTDh6A",4.5,220,"payday",300,500,0.501,"delivery","GAP CALL. Veg dishes cheap, meat dishes push past 400.",14.637236,121.0348289],
+    [32,"Lola Ote Restaurant","ChIJ6_Xznq63lzMR3P8q3NDQ8Z4",4.5,740,"payday",300,450,0.848,"delivery","GAP CALL. Kare-kare, pork BBQ. Breakfast 7-10 AM only.",14.6364592,121.0398939],
+    [33,"Mango Tree Cafe | Trinoma","ChIJX23wpQK3lzMRdKufBjQPA4M",4.5,226,"payday",600,900,1.338,"delivery","Thai. Reviews repeatedly call it overpriced; go for the mango sticky rice.",14.6537304,121.0341645],
+    [34,"Half Saints","ChIJR8aRrKu3lzMRjDGVIaK7kzY",4.5,580,"payday",600,1000,0.269,"walkable","Small plates, tasting-menu energy. Small space, reserve.",14.641437,121.0366589],
+    [35,"Sam Stew, Vertis North","ChIJY7IZSaS3lzMRyV8I1Fj465Y",4.9,4862,"payday",700,900,1.237,"delivery","Unli Korean BBQ + hotpot buffet. 4,862 reviews at 4.9.",14.652674,121.0360215],
+    [36,"American Backyard - Grandia","ChIJh5sblMy3lzMR0D_MS8trQTw",4.7,236,"payday",500,900,0.204,"walkable","Pasta finished in a parmesan wheel. Long waits, limited parking.",14.6402605,121.0353527],
+    [37,"Livestock","ChIJnQR8BKy3lzMRZ-usMpRwvUM",4.5,803,"payday",500,800,0.695,"delivery","Crispy pata specialist. Crispy ulo is better value than the pata.",14.6376047,121.0390481],
+    [38,"Tablo Bistro","ChIJF1M1SQC3lzMR5SXw7lGpoaw",4.6,133,"payday",500,800,0.504,"delivery","Sister to Tablo Kitchen. Four-cheese truffle flatbread.",14.6372031,121.0347801],
+    [39,"SOME THAI","ChIJM7Ujx8e3lzMRQ7ahPSJONLA",4.7,1994,"payday",500,800,1.033,"delivery","Michelin-listed. Crab curry. Group must be complete to be seated.",14.6324156,121.0346478],
+    [40,"Botejyu Trinoma","ChIJ7WU3PEO3lzMRs0qAqTf69GI",4.8,639,"payday",500,800,1.254,"delivery","Okonomiyaki and yakisoba. Bundle for 4 is the value play.",14.6529684,121.0338047],
+    [41,"Shrimp Bucket Trinoma","ChIJmwOmtGy3lzMRpvkjt9q4TUg",4.8,251,"payday",500,800,1.251,"delivery","Reviewers call it pricey; value meals exist.",14.6529432,121.0339975],
+    [42,"Smokes and Bones","ChIJ-VOHTGq3lzMRNAN8Rc3nDyE",4.9,106,"payday",500,800,0.846,"delivery","4.9 stars. BBQ ribs and smoked beef belly. Opens 2:30 PM.",14.6406061,121.0263876],
+    [43,"Flash Ramen","ChIJlWnEroa3lzMRxagKuJePZzQ",4.5,195,"payday",350,550,0.474,"walkable","GAP CALL. Solo booths. Reviews split hard on whether food matches price.",14.6376056,121.0329288],
+    [44,"Mom and Tina's Bakery Cafe","ChIJrbqjuqu3lzMRVR8F3TfMkFo",4.4,474,"payday",350,550,0.344,"walkable","GAP CALL. Roast beef is good but priced up. Cupcakes, all-day breakfast.",14.6406669,121.0371877],
+    [45,"Borro","ChIJW5VNT_m3lzMR1zftyhLgIoU",4.4,1020,"payday",400,700,0.524,"delivery","Three floors, opens 7 AM. Boneless fried chicken is the pick, skip the steak.",14.6375586,121.0318497],
+    [46,"King Chef Seafood - West Ave","ChIJ9yHcGE63lzMRPOpghmojsJ4",4.4,553,"payday",400,700,1.042,"delivery","Banquet-style Chinese. Peking duck. Discounted dimsum in the afternoon.",14.6373267,121.0255995],
+    [47,"Sourdough Cafe Tomas Morato","ChIJ74ykOiK3lzMRUngFXFVqJZs",4.6,624,"payday",400,700,1.288,"delivery","Lobster bisque with sourdough. Opens 8 AM weekends.",14.6301148,121.0341235],
+    [48,"Dylan Patisserie QC","ChIJcZTuy-y3lzMR4zr8pl5skP8",4.7,1089,"payday",400,700,1.353,"delivery","Farthest on the list. Reviews split: great looks, mixed taste.",14.6296896,121.032134],
+    [49,"Mama Lou's Italian Kitchen - Vertis","ChIJ03GXVwK3lzMROEMW3s-3Ic0",4.8,2252,"payday",400,650,1.096,"delivery","Complimentary bread. Generous portions.",14.6514472,121.0356911],
+    [50,"Under the Balete","ChIJobnUla63lzMRzRKRiZJXj2g",4.6,222,"payday",400,650,0.859,"delivery","Pet-friendly, wide parking. P199 special menu Fri-Sun before 11:30 AM.",14.6401009,121.026356],
+    [51,"Al Carbon Mexican Grill by PK","ChIJX_kOhxW3lzMRKj0mH_2JEwo",4.8,145,"payday",400,650,0.817,"delivery","Rare good Mexican in the area. Barbacoa quesadilla. Sells vinyl too.",14.6365772,121.0396142],
+    [52,"LOLA Cafe - Tomas Morato","ChIJMxUhIEy2lzMRHllLPcMLtAI",4.4,1021,"payday",400,650,1.303,"delivery","Filipino-fusion. Kare-kare rice bowl. Reserve for 5+.",14.6300832,121.0325572],
+    [53,"Hap Chan West Avenue","ChIJvYf5VP-2lzMRtJrhShvN5QE",4.3,623,"payday",350,500,0.792,"delivery","GAP CALL. Dim sum. Recent reviews flag shrinking portions and slow service.",14.6454595,121.027918],
+    [54,"Ramen Yushoken QC","ChIJa0_wizy3lzMRGz7EhfZYAtY",4.5,349,"payday",400,600,0.149,"walkable","Second-closest on the whole list. Handmade noodles, best gyoza per reviews.",14.6404675,121.0336196],
+    [55,"Ramen Hiro","ChIJPcPUAQC3lzMRg8CUxWqLNJg",4.6,290,"payday",400,600,0.507,"delivery","Kyoto-style. Duo Special is the value order.",14.6378541,121.0367128],
+    [56,"Ramen Butcher Manila","ChIJwWi2rdG3lzMRVZPkB1mBWis",4.4,681,"payday",400,600,1.196,"delivery","Hakata classic. Big gyoza.",14.6316686,121.0301612],
+    [57,"Sweet Ecstasy","ChIJUzhqGmO3lzMRzXsGgXfF02g",4.5,309,"payday",400,600,0.985,"delivery","Steam burger is the standout. Inside a gas station, ~4 tables.",14.6368131,121.0418051],
+    [58,"Buffalo's Wings N' Things - M-Place","ChIJHVuCDNK3lzMRpOImrY-3d58",3.3,27,"tipid",250,400,0.28,"walkable","Filling meal ~250 per reviews. Roach complaints, 3.3 stars.",14.6392205,121.0337077],
+    [59,"Saigon Corner PH","ChIJexTsB6y3lzMRaTqUZneob7A",4.3,385,"tipid",250,400,0.469,"walkable","GAP CALL. Pho and banh mi. Up the stairs, easy to miss.",14.6376491,121.0353772],
+    [60,"Pepeton's Grill & Catering","ChIJGZ7cEVO2lzMR9Ys9Xk6ElZU",4.4,1022,"tipid",250,400,0.522,"delivery","Bulalo, crispy pata. Sharing dishes. Parking is rough.",14.6378072,121.0314514],
+    [61,"Thai Mango Timog","ChIJHVR2y563lzMRly97HVIE44I",4.7,591,"tipid",200,350,0.863,"delivery","Open 24h. Bagoong rice is the value pick.",14.6343711,121.0368269],
+    [62,"Habit Food Group South Triangle","ChIJk98mvaW3lzMRSjKp-DDxtQo",4.3,44,"tipid",200,350,0.451,"walkable","Six stalls: bowls, breakfast, kebab, bento.",14.638983,121.0310601],
+    [63,"Foam Coffee Quezon Ave.","ChIJ28lvf--3lzMRhOQtr4l3Ia8",4.7,1146,"tipid",200,350,0.16,"walkable","Open till 2 AM. Pastries P80-95, cheesy buldak.",14.6409532,121.0328934],
+    [64,"JT's Manukan Grille Scout Borromeo","ChIJR5xZDmW3lzMR8mDFKA3ad4c",4.2,103,"tipid",200,300,0.463,"walkable","Open till 1 AM. Inasal ~P243 with rice.",14.6386411,121.0312462],
+    [65,"Drizzled Chicken - Timog","ChIJF43kDAC3lzMRWNHsnzMXbqk",4.8,105,"tipid",180,300,0.859,"delivery","Generous servings, sauce guide.",14.6346562,121.037463],
+    [66,"Susie's Cuisine Morato","ChIJi7PEiay3lzMRuNfu5Wt_w04",4.2,231,"tipid",150,300,0.481,"walkable","Palabok and kakanin. Closes 7 PM.",14.6379123,121.03633],
+    [67,"GOODAH!!! Timog","ChIJa9JXcq23lzMRFehLLJB0hKg",3.8,920,"tipid",150,300,0.786,"delivery","Open 24h. Silog cheap, but some mains hit P419.",14.6348606,121.0360152],
+    [68,"Timog Food Plaza","ChIJR9fatFK2lzMRTOdKtteoevU",4.3,415,"tipid",150,300,0.735,"delivery","24h food court. Quality varies a lot by stall.",14.6351214,121.0334552],
+    [69,"Scouter's Eatery","ChIJaxcJHmG3lzMRJ5YqZ45Lmqw",4.4,112,"tipid",150,300,0.742,"delivery","~P200/ulam good for 2-3. Open 24h.",14.635048,121.033573],
+    [70,"Jollibee NBS Quezon Ave","ChIJP0ItTNe3lzMR3bc7Qg8QcR0",3.8,118,"tipid",120,250,0.442,"walkable","Open 24h. Alt branches: Scout Tobias (0.68km), Tomas Morato (1.15km).",14.6396049,121.0306765],
+    [71,"Sangkalan Restaurant","ChIJoQXANSi3lzMRKncsHINqaLg",4.4,440,"tipid",250,400,0.8,"delivery","Filipino, live 70s-80s music. Big portions, free birthday cake.",14.6422188,121.0267515],
+    [72,"Wabi-Sabi Noodle House","ChIJhXRXGa23lzMRnITTSE7ks-E",4.5,310,"tipid",250,400,0.668,"delivery","Fully vegan, muslim-friendly. Tantanmen. Tucked inside a building.",14.635777,121.035208],
+    [73,"Kowloon House West Avenue","ChIJ6Xg5QFG2lzMRyoR8xoQzf5g",4.2,1446,"tipid",250,400,0.864,"delivery","Open 24h, has drive-thru. Siopao, crispy noodles.",14.6393132,121.0265273],
+    [74,"Ramen Kuroda Eton Centris","ChIJbQYujqm3lzMR7xhYCuIqVYA",4.4,479,"tipid",250,400,0.63,"delivery","Cheapest decent ramen nearby. Set meals. Broth can run salty.",14.6415671,121.0400221],
+    [75,"Angel's Pizza - Timog","ChIJ2w06YgC3lzMRJNV3SPEtaaA",3.7,78,"tipid",250,400,0.74,"delivery","Open 24h, delivery-oriented. Sushi bake pizza. 3.7 stars, slow service.",14.6350565,121.0337524],
+    [76,"Mum's Lasagna","ChIJaReTzouwlzMRYOaZ1zA-gwI",4.9,396,"tipid",250,400,0.507,"delivery","4.9 stars. Takeaway only, order online ahead. Barkada-size trays.",14.6371408,121.0342297],
+    [77,"the good food.mnl","ChIJQXKck1G3lzMRc_E-f344sbc",5.0,8,"tipid",250,400,0.752,"delivery","Fish and chips, pork steak. Closed Sundays, only 8 reviews.",14.6426336,121.027251],
+    [78,"Chickey's","ChIJEWd12HG3lzMR-SRagzyzlP8",4.5,113,"tipid",250,400,0.813,"delivery","Bacolod inasal. B1T1 cocktails 5-8 PM. Open till 4 AM Thu-Sat.",14.6343872,121.0339869],
+    [79,"Magdamag Market Cafe","ChIJae7d9PS3lzMRuQLAq1Dxi-Y",4.6,186,"tipid",250,400,0.998,"delivery","Kesong puti grilled cheese ~P280. Free parking. Service is hit-or-miss.",14.6352438,121.0406216],
+    [80,"Mister Kabab West Avenue","ChIJRT8uuFa2lzMRkU1fNNmUnIU",4.5,4894,"tipid",200,350,0.824,"delivery","Open 24h, 4,894 reviews. Kebabs and rice platters. No aircon.",14.6410364,121.0265385],
+    [81,"Kim's Ramyun#1 - Timog","ChIJ4xEDlW3IlzMRGplAsffv8RQ",4.8,1756,"tipid",200,350,1.11,"delivery","Open 24h, self-cook Korean instant noodles. P50 cooking fee, toppings P1/g.",14.63361,121.040225],
+    [82,"Salido Restaurant","ChIJOT-qG_y2lzMR6p6zn_alehM",4.3,43,"tipid",200,350,0.812,"delivery","Chinese, opens 7:30 AM. Mami and dimsum. Skip the congee per reviews.",14.6414817,121.0266224],
+    [83,"Burger King Timog","ChIJeyFWRFK2lzMRW8DEmxSRhdE",4.4,1835,"tipid",200,350,0.758,"delivery","Open 24h with drive-thru.",14.6363801,121.029764],
+    [84,"981 Espresso Bar","ChIJWeaANqO3lzMRdRSXD6-AXJY",4.7,74,"tipid",200,350,0.487,"walkable","Open till 12-1 AM. 2hr wifi, sockets. Cash only, no card payments.",14.6379061,121.0364407],
+    [85,"Kalinaw Coffee Co.","ChIJTbsl0cG3lzMRGZmrlEn8zRg",4.7,57,"tipid",200,350,0.657,"delivery","Open till 11 PM. Wifi, sockets, board games. Work-friendly.",14.645463,121.029462],
+    [86,"Disciple Brew","ChIJCRJnGgC3lzMRh1nn1l56dV0",4.9,399,"tipid",200,350,0.731,"delivery","4.9 stars. Rice bowls and coffee. Worship music playing.",14.6404946,121.0408462],
+    [87,"Perene Cakes & Pastries","ChIJ4TCsH3y3lzMRpWSY4qdrhWw",4.8,141,"tipid",200,350,1.112,"delivery","Cheaper than most Vertis cafes. Basil pesto, cakes.",14.6515981,121.0355962],
+    [88,"Bacolod Chicken Parilla","ChIJ2QCgQ062lzMRwoaRgLFYrIg",4.3,938,"tipid",200,350,1.263,"delivery","Charcoal inasal, better than Mang Inasal per reviews. Service and cleanliness complaints.",14.6334702,121.0260732],
+    [89,"3M Pizza Panay Avenue","ChIJ2dYI5q23lzMRE0UBSESiQ8E",4.5,11,"tipid",200,350,0.444,"walkable","Tucked inside the National Bookstore complex. Only 11 reviews.",14.6392578,121.0309032],
+    [90,"Chic-Boy - West Ave","ChIJYWzM6Ae3lzMRF6CIObofUQc",3.3,55,"tipid",180,300,0.798,"delivery","Only remaining Metro branch. Cebu lechon. 3.3 stars, ventilation complaints.",14.6438939,121.0271108],
+    [91,"ZhaHun Chicken Chop - Eton Centris","ChIJNXCsbQC3lzMRKP4EOjs5pMo",4.6,77,"tipid",150,300,0.625,"delivery","Taiwanese chicken chop. P590 for a 5-pc bundle. Gravy costs extra.",14.6423466,121.0399433],
+    [92,"Chef Swakto Quezon City","ChIJt5IhVAC3lzMRQdpf2x4yAOk",4.4,20,"tipid",150,280,0.678,"delivery","Home-style, very cheap. Only 20 reviews and one harsh 1/10.",14.6377658,121.0389904],
+    [93,"Goto Kips","ChIJHTWPvl-3lzMR6X1e5ygvJec",4.7,124,"tipid",150,300,0.894,"delivery","Goto, lomi, pares. Lechon kawali stays crispy. Quiet and clean.",14.6358229,121.0398459],
+    [94,"Serenitea - Tomas Morato","ChIJwc8g9q23lzMRAfHj7nXvnGE",4.6,180,"tipid",150,300,0.9,"delivery","Open till 1 AM. Milk tea plus squid balls. Free wifi, second floor.",14.6337404,121.0357021],
+    [95,"Bean + Butter Co","ChIJX1pgXAC3lzMRjOuTcl9y7uo",5.0,6,"tipid",150,300,0.635,"delivery","Open till midnight. Ube espresso. Only 6 reviews.",14.6377413,121.0384301],
+    [96,"Popeyes - TriNoma","ChIJgy8erG23lzMRKbtO_zS5ukw",4.0,330,"tipid",150,300,1.324,"delivery","4.0 stars with repeated understaffing and cleanliness complaints.",14.6535954,121.033617],
+    [97,"Tsibog'King","ChIJ8RrE1sa3lzMRfuxQaFyuwBw",4.6,10,"tipid",100,250,0.4,"walkable","Silogan across from Saigon Corner. Cheap and home-made. Closed Sundays.",14.6382255,121.0351528],
+    [98,"Merced Bakehouse and Restaurant","ChIJhQhU9QC3lzMRmtWVCCic-IY",4.4,403,"tipid",100,250,0.479,"walkable","Old-school bakery, closes 5 PM. Beehive and snowball are the classics.",14.6454678,121.0363159],
+    [99,"Estrel's Caramel Cake","ChIJq8cSeU22lzMRVhtg64KYlQg",4.6,1486,"tipid",100,250,0.929,"delivery","Cakes only, not a meal. QC institution. Order ahead, closes 5 PM.",14.633963,121.0309085],
+    [100,"Chowking Trinoma","ChIJ5bfEfAK3lzMRJyRlD4C4mRg",4.0,747,"tipid",120,250,1.159,"delivery","4.0 stars. Multiple recent complaints about cold food and service.",14.6520741,121.0331627],
+    [101,"JHING CARINDERIA","ChIJSeZevYW3lzMRpTWmtWm4pv8",5.0,1,"tipid",80,200,0.649,"delivery","True carinderia, 5 AM-2 PM only, closed Sundays. Only 1 review - unverified.",14.6372711,121.0380982],
+    [102,"1st Floor","",null,null,"tipid",null,null,0.0,"walkable","In-building. User-supplied, no travel time.",14.6416975,121.0341707],
+    [103,"3rd Floor","",null,null,"tipid",null,null,0.0,"walkable","In-building. User-supplied, no travel time.",14.6416975,121.0341707]
   ];
 
 
   var LATE = /24h|till [1-5] AM|till midnight/i;
 
+  /* the Triumph building — every distance, route and sketch starts here */
+  var OLAT = 14.641697530484791, OLNG = 121.03417069320768;
+  var ORIGIN = OLAT + "," + OLNG;
+  var KM_PER_LAT = 110.574;
+  var KM_PER_LNG = 111.320 * Math.cos(OLAT * Math.PI / 180);
+  var COMPASS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+
+  /* deterministic wobble, so a given place always sketches the same way */
+  function seeded(n) {
+    var v = (n * 9301 + 49297) % 233280;
+    return function () { v = (v * 9301 + 49297) % 233280; return v / 233280; };
+  }
+
+  function offsetKm(p) {
+    return { x: (p.lng - OLNG) * KM_PER_LNG, y: (p.lat - OLAT) * KM_PER_LAT };
+  }
+
+  function drawSchematic(p) {
+    var art = $("mapArt"), cap = $("mapCap");
+    var W = 320, H = 176, cx = W / 2, cy = H / 2, maxR = 60;
+
+    if (p.inBuilding) {
+      art.innerHTML =
+        '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="You are already in the building">' +
+          '<circle class="ring" cx="' + cx + '" cy="' + cy + '" r="26"></circle>' +
+          '<circle class="ring" cx="' + cx + '" cy="' + cy + '" r="44"></circle>' +
+          '<circle cx="' + cx + '" cy="' + cy + '" r="4" fill="#F2E4E1"></circle>' +
+          '<text class="you" x="' + cx + '" y="' + (cy + 20) + '" text-anchor="middle">YOU. ALREADY. HERE.</text>' +
+        '</svg>';
+      cap.textContent = "0.00 km · no bearing · take the stairs";
+      return;
+    }
+
+    var d = offsetKm(p);
+    var km = Math.sqrt(d.x * d.x + d.y * d.y);
+    var view = Math.max(km * 1.22, 0.3);
+    var sc = maxR / view;
+    var tx = cx + d.x * sc, ty = cy - d.y * sc;
+    var rnd = seeded(p.id);
+
+    var svg = ['<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Rough sketch of the route from the Triumph building to ' + p.name + '">'];
+
+    /* distance rings, drawn a little unevenly on purpose */
+    [0.5, 1.0].forEach(function (k) {
+      var r = k * sc;
+      if (r > maxR + 26) return;
+      var pts = [];
+      for (var a = 0; a < 26; a++) {
+        var ang = (a / 26) * Math.PI * 2;
+        var rr = r * (1 + (rnd() - 0.5) * 0.05);
+        pts.push((cx + Math.cos(ang) * rr).toFixed(1) + "," + (cy + Math.sin(ang) * rr).toFixed(1));
+      }
+      svg.push('<path class="ring" d="M' + pts.join("L") + 'Z"></path>');
+      svg.push('<text class="tick" x="' + (cx + 3) + '" y="' + (cy - r + 10) + '">' + k.toFixed(1) + 'km</text>');
+    });
+
+    /* the route: straight line nudged off true, like a pen that wandered */
+    var segs = ["M" + cx + "," + cy];
+    for (var i = 1; i <= 4; i++) {
+      var t = i / 4;
+      var px = cx + (tx - cx) * t, py = cy + (ty - cy) * t;
+      if (i < 4) {
+        var nx = -(ty - cy), ny = (tx - cx);
+        var len = Math.sqrt(nx * nx + ny * ny) || 1;
+        var push = (rnd() - 0.5) * 11;
+        px += (nx / len) * push;
+        py += (ny / len) * push;
+      }
+      segs.push("L" + px.toFixed(1) + "," + py.toFixed(1));
+    }
+    var path = segs.join(" ");
+    svg.push('<path class="rt-ghost" d="' + path + '"></path>');
+    svg.push('<path class="rt" d="' + path + '"></path>');
+
+    /* you */
+    svg.push('<circle cx="' + cx + '" cy="' + cy + '" r="3.5" fill="#F2E4E1"></circle>');
+    svg.push('<path class="pin" d="M' + (cx - 9) + ',' + cy + 'h18M' + cx + ',' + (cy - 9) + 'v18"></path>');
+    svg.push('<text class="you" x="' + cx + '" y="' + (cy + 22) + '" text-anchor="middle">YOU</text>');
+
+    /* the verdict, marked with an X */
+    svg.push('<path class="pin-x" d="M' + (tx - 6) + ',' + (ty - 6) + 'l12,12M' + (tx + 6) + ',' + (ty - 6) + 'l-12,12"></path>');
+    var right = tx <= cx;
+    var label = p.name.length > 22 ? p.name.slice(0, 21) + "…" : p.name;
+    svg.push('<text class="dest" x="' + (tx + (right ? 11 : -11)).toFixed(1) + '" y="' +
+      (ty + (ty < cy ? -10 : 17)).toFixed(1) + '" text-anchor="' + (right ? "start" : "end") + '">' +
+      label.toUpperCase().replace(/&/g, "&amp;") + '</text>');
+
+    /* north, roughly */
+    var nx2 = W - 20;
+    svg.push('<path class="needle" d="M' + nx2 + ',34 V13 M' + (nx2 - 4) + ',18 L' + nx2 + ',12 L' + (nx2 + 4) + ',18"></path>');
+    svg.push('<text class="tick" x="' + nx2 + '" y="45" text-anchor="middle">N</text>');
+
+    svg.push('</svg>');
+    art.innerHTML = svg.join("");
+
+    var dir = COMPASS[Math.round(((Math.atan2(d.x, d.y) * 180 / Math.PI + 360) % 360) / 22.5) % 16];
+    cap.textContent = km.toFixed(2) + " km as the crow flies · bearing " + dir +
+      " · ~" + p.mins + " min on foot";
+  }
+
+  /* fun fact of the day — one gets pulled every time the board lands */
+  var FACTS = [
+    "The first computer bug was an actual moth, taped into the Harvard Mark II logbook in 1947.",
+    "Grace Hopper built one of the earliest compilers, at a time when the idea that a computer could write its own machine code was dismissed as impossible.",
+    "Ray Tomlinson picked the @ symbol for email addresses in 1971 mostly because nobody's name contained it.",
+    "The first message sent over ARPANET was LO. The system crashed midway through typing LOGIN.",
+    "Wi-Fi does not stand for anything. A branding firm invented it because IEEE 802.11b Direct Sequence was unmarketable.",
+    "Python is named after Monty Python, not the snake.",
+    "JavaScript was prototyped in about ten days in 1995, and shares almost nothing with Java beyond the name.",
+    "Java was nearly called Oak, after a tree outside the office window.",
+    "Using spam for junk mail traces back to a Monty Python sketch where the word drowns out every conversation.",
+    "Git was written in a matter of weeks in 2005, after the Linux kernel team lost access to the tool it had been using.",
+    "Linus Torvalds introduced Linux as just a hobby, won't be big like GNU.",
+    "The Trojan Room coffee pot in Cambridge became the world's first webcam subject, so researchers could avoid walking to an empty jug.",
+    "Ctrl+Alt+Del was designed as a developer shortcut. The engineer behind it never expected users to see it.",
+    "Moore's Law was an observation in a 1965 trade magazine article, not a law of anything.",
+    "The Apollo Guidance Computer flew to the Moon on a few kilobytes of memory.",
+    "Margaret Hamilton led the team that wrote Apollo's onboard flight software, and helped popularise the term software engineering.",
+    "Ada Lovelace published what is widely considered the first algorithm written for a machine, in the 1840s.",
+    "Alan Turing described what a computer could and could not compute in 1936, years before one existed to test it on.",
+    "Y2K existed because storing a year as two digits saved memory back when memory cost real money.",
+    "Unix time counts seconds from 1 January 1970. Systems still using a signed 32-bit counter run out in 2038.",
+    "A kilobyte means 1,000 bytes and a kibibyte means 1,024. The confusion exists because storage marketing preferred the smaller-sounding one.",
+    "A byte is eight bits by convention, not by rule. Early machines used six, seven, and nine.",
+    "symbolics.com, registered in 1985, was the first .com domain.",
+    "HTTP 418 I'm a teapot is a real registered status code, born from an April Fools specification.",
+    "The popular story that 404 refers to a room at CERN is false. It is simply the fourth error in the fourth class.",
+    "Bluetooth is named after a tenth-century Danish king, and its logo is his initials written in runes.",
+    "Robot comes from a 1920 Czech play, built on a word for forced labour.",
+    "Emoji comes from Japanese words for picture and character. The resemblance to emotion is a coincidence.",
+    "Douglas Engelbart demonstrated the mouse, video calling, and hypertext in a single 1968 presentation now called the Mother of All Demos.",
+    "The web was built at CERN to help physicists share documents. The first website is still online.",
+    "Browser cookies were invented at Netscape in 1994 to solve the problem of a web that forgot you instantly.",
+    "Public key cryptography was published in 1976, but British intelligence had quietly discovered it years earlier.",
+    "Nintendo was founded in 1889, making playing cards.",
+    "Spacewar! spread across universities in the 1960s because programmers copied the source by hand.",
+    "The first iPhone shipped with no App Store. Third-party apps arrived a year later.",
+    "Booting is short for bootstrapping, from the impossible image of pulling yourself up by your own bootstraps.",
+    "Kubernetes is Greek for helmsman. K8s is just the eight letters between the K and the s.",
+    "Containers felt new when Docker arrived, but the Linux features underneath had existed for years.",
+    "The entire 127.0.0.0/8 range is loopback. Your machine has over sixteen million ways to talk to itself.",
+    "IPv4 ran out of free addresses years ago. IPv6 has enough to assign trillions to every person alive.",
+    "Firewall was borrowed from architecture, where it describes a wall built to stop fire spreading between rooms.",
+    "Rubber duck debugging got its name from a book, and works because explaining a bug out loud forces you to actually read your code.",
+    "0xDEADBEEF is a real magic number, chosen because it is valid hexadecimal and impossible to mistake for real data.",
+    "How to exit vim is one of the most searched programming questions of all time.",
+    "The QWERTY layout comes from 1870s typewriters. The tidy explanation about preventing jams is disputed by historians.",
+    "Autocorrect, spellcheck, and search ranking all lean on ideas from information theory that Claude Shannon laid out in 1948."
+  ];
+
+  function randomFact() { return FACTS[Math.floor(Math.random() * FACTS.length)]; }
+
   var PLACES = RAW.map(function (r) {
     var note = r[10];
     var gap = note.indexOf("GAP CALL.") === 0;
     return {
-      id: r[0], name: r[1], rating: r[3], count: r[4], band: r[5],
+      id: r[0], name: r[1], placeId: r[2], rating: r[3], count: r[4], band: r[5],
       low: r[6], high: r[7], km: r[8], mode: r[9],
       note: gap ? note.replace(/^GAP CALL\.\s*/, "") : note,
       gap: gap,
       inBuilding: r[8] === 0,
       late: LATE.test(note),
       mins: Math.round(r[8] * 12),
+      lat: r[11], lng: r[12],
       url: r[2] ? "https://www.google.com/maps/place/?q=place_id:" + r[2] : null
     };
   });
@@ -676,15 +921,20 @@
   var spinBtn = $("spin"), verdictTag = $("verdict"), ticket = $("ticket");
   var newRound = $("newround"), foot = $("foot"), mapBtn = $("tMap");
 
-  var REACH_KM = { building: 0, "500": 0.5, "1000": 1.0, any: Infinity };
+  /* mutually exclusive — a 400 m spot is "quick walk" only, never "short trip" */
+  var REACH_RANGE = {
+    building: [0, 0],
+    "500":    [0.001, 0.5],
+    "1000":   [0.501, 1.0],
+    any:      [0, Infinity]
+  };
 
   function eligible() {
     if (band === "fasting") return [];
-    var limit = REACH_KM[reach];
+    var r = REACH_RANGE[reach];
     return PLACES.filter(function (p) {
       if (band !== "any" && p.band !== band) return false;
-      if (reach === "building") return p.inBuilding;
-      return p.km <= limit;
+      return p.km >= r[0] && p.km <= r[1];
     });
   }
 
@@ -699,13 +949,13 @@
   function plural(n, one, many) { return n + " " + (n === 1 ? one : many); }
 
   function bandWord() {
-    return band === "payday" ? "payday picks" : band === "tipid" ? "tipid picks" : "places";
+    return band === "payday" ? "payday picks" : band === "tipid" ? "tipid picks" : "spots";
   }
 
   function reachWord() {
-    return reach === "building" ? "inside the building"
+    return reach === "building" ? "in this building"
       : reach === "500" ? "within a 500 m walk"
-      : reach === "1000" ? "within 1 km"
+      : reach === "1000" ? "on the 500 m \u2013 1 km ring"
       : "in range";
   }
 
@@ -717,10 +967,10 @@
 
     pot.classList.toggle("empty", empty);
     if (fasting) {
-      pot.innerHTML = "<b>0</b> places in the pot &middot; nothing out there but resolve";
+      pot.innerHTML = "<b>0</b> spots in the pot &middot; nothing out here but resolve";
     } else if (empty) {
       pot.innerHTML = "<b>0</b> " + bandWord() + " " + reachWord() +
-        " &middot; the canteen does not do wagyu";
+        " &middot; the canteen doesn't do wagyu";
     } else {
       var near = Math.min.apply(null, list.map(function (p) { return p.km; }));
       var far = Math.max.apply(null, list.map(function (p) { return p.km; }));
@@ -732,12 +982,12 @@
     if (locked || spinning) return;
 
     reel.className = "reel idle";
-    reel.textContent = empty ? "Nothing fits" : "Pull the lever";
+    reel.textContent = empty ? "nothing, sorry" : "spin to find out";
     subline.textContent = fasting
-      ? "The board will still spin. It always spins."
+      ? "the board still spins. it always spins."
       : empty
-        ? "Loosen one of the two questions above."
-        : plural(list.length, "place", "places") + " " + reachWord() + ". One of them is lunch.";
+        ? "loosen one of the two above and try again."
+        : plural(list.length, "spot", "spots") + " " + reachWord() + ". one of them is lunch.";
   }
 
   function renderTicket(p) {
@@ -747,18 +997,18 @@
     $("tLate").hidden = !p.late;
 
     $("tRating").innerHTML = p.rating === null
-      ? 'n/a <span class="unit">(unlisted)</span>'
+      ? 'n/a <span class="unit">not on maps</span>'
       : p.rating.toFixed(1) + '★ <span class="unit">(' + p.count + ")</span>";
 
     $("tDist").innerHTML = p.inBuilding
-      ? 'Same <span class="unit">building</span>'
+      ? 'same <span class="unit">building</span>'
       : p.km.toFixed(2) + ' <span class="unit">km</span>';
 
     var walkWrap = $("tWalkWrap");
     if (p.inBuilding) {
       walkWrap.classList.remove("warn");
       walkWrap.querySelector("dt").textContent = "On foot";
-      $("tWalk").innerHTML = '0 <span class="unit">min — take the stairs</span>';
+      $("tWalk").innerHTML = '0 <span class="unit">min, take the stairs</span>';
     } else if (p.mode === "walkable") {
       walkWrap.classList.remove("warn");
       walkWrap.querySelector("dt").textContent = "On foot";
@@ -766,18 +1016,28 @@
     } else {
       walkWrap.classList.add("warn");
       walkWrap.querySelector("dt").textContent = "Getting there";
-      $("tWalk").innerHTML = 'Ride or deliver <span class="unit">(~' + p.mins + " min walk)</span>";
+      $("tWalk").innerHTML = 'ride or deliver <span class="unit">(~' + p.mins + " min walk)</span>";
     }
 
     $("tPrice").innerHTML = p.low === null
-      ? 'Your call <span class="unit">whatever is open</span>'
+      ? 'your call <span class="unit">whatever is open</span>'
       : "₱" + p.low + "&ndash;" + p.high + ' <span class="unit">est.</span>';
 
+    drawSchematic(p);
     $("tNote").textContent = p.note;
 
     /* the in-building picks have no Maps listing to open */
     mapBtn.hidden = !p.url;
     if (p.url) mapBtn.href = p.url;
+
+    var route = $("tRoute");
+    route.hidden = !p.placeId;
+    if (p.placeId) {
+      route.href = "https://www.google.com/maps/dir/?api=1&origin=" + ORIGIN +
+        "&destination=" + encodeURIComponent(p.name) +
+        "&destination_place_id=" + p.placeId +
+        "&travelmode=walking";
+    }
 
     ticket.hidden = false;
   }
@@ -815,19 +1075,19 @@
     board.classList.remove("won");
     board.classList.add("hot");
     reel.className = "reel";
-    eyebrow.textContent = fasting ? "Tempting you anyway…" : "Shaking the pot…";
+    eyebrow.textContent = fasting ? "tempting you anyway…" : "let it cook…";
     subline.textContent = fasting
-      ? "Every one of them, and none of them."
+      ? "every single one of them, and none of them."
       : res.refilled
-        ? "Pot was empty — everyone's back in."
-        : plural(res.list.length, "candidate", "candidates") + " in play";
+        ? "pot ran dry — everyone's back in."
+        : plural(res.list.length, "spot", "spots") + " in play";
 
     var delay = reduced ? 90 : 42;
     var budget = reduced ? 360 : 2400;
     var elapsed = 0;
 
     function tick() {
-      if (elapsed >= budget) return land(winner);
+      if (elapsed >= budget) return finale();
       reel.textContent = faces[Math.floor(Math.random() * faces.length)].name;
       elapsed += delay;
       delay *= 1.115;
@@ -835,32 +1095,67 @@
     }
     tick();
 
+    /* two near-misses, each held longer than the last, before it commits */
+    function finale() {
+      if (reduced) return land(winner);
+
+      var others = faces.filter(function (f) { return !winner || f.id !== winner.id; });
+      var teases = [];
+      while (teases.length < 2 && others.length) {
+        teases.push(others.splice(Math.floor(Math.random() * others.length), 1)[0]);
+      }
+      if (!teases.length) return land(winner);
+
+      board.classList.remove("hot");
+      board.classList.add("tease");
+      eyebrow.textContent = "wait…";
+
+      var holds = [380, 620];
+      var i = 0;
+      (function beat() {
+        if (i >= teases.length) {
+          board.classList.remove("tease");
+          return land(winner);
+        }
+        reel.textContent = teases[i].name;
+        setTimeout(beat, holds[i++]);
+      })();
+    }
+
     function land(p) {
       spinning = false;
       locked = true;
       board.classList.remove("hot");
+      board.classList.remove("tease");
       board.classList.add("won");
       reel.className = "reel";
       spinBtn.hidden = true;
+      $("factText").textContent = randomFact();
       verdictTag.hidden = false;
       newRound.hidden = false;
 
       if (fasting) {
-        reel.textContent = "Water";
-        eyebrow.textContent = "The board respects your discipline";
-        subline.innerHTML = '<span class="tag">Tubig lang</span> &nbsp;Free, 0.00 km, no queue. Discipline noted.';
-        history.unshift({ name: "Water (fasting)" });
+        current = null;
+        copyBtn.hidden = true;
+        reel.textContent = "water";
+        eyebrow.textContent = "respect the grind";
+        subline.innerHTML = '<span class="tag">tubig lang</span> &nbsp;free, 0.00 km, no queue. discipline is crazy.';
+        history.unshift({ name: "water (fasting)" });
         renderHistory();
         return;
       }
 
       served[p.id] = true;
+      current = p;
+      copyBtn.hidden = false;
       history.unshift(p);
       reel.textContent = p.name;
-      eyebrow.textContent = "The board has decided";
-      subline.innerHTML = p.mode === "walkable"
-        ? '<span class="tag">Walk it</span> &nbsp;' + p.mins + " min from where you're standing"
-        : '<span class="tag">Order in</span> &nbsp;' + p.km.toFixed(2) + " km out — let it come to you";
+      eyebrow.textContent = "the board said so. period.";
+      subline.innerHTML = p.inBuilding
+        ? '<span class="tag">no excuses</span> &nbsp;it is literally in this building. take the stairs.'
+        : p.mode === "walkable"
+          ? '<span class="tag">get up</span> &nbsp;' + p.mins + " min on foot from where you're standing"
+          : '<span class="tag">let it come to you</span> &nbsp;' + p.km.toFixed(2) + " km out";
       renderTicket(p);
       renderHistory();
     }
@@ -868,12 +1163,14 @@
 
   function startNewRound() {
     locked = false;
+    copyBtn.textContent = "copy for the gc";
+    copyBtn.classList.remove("done");
     ticket.hidden = true;
     verdictTag.hidden = true;
     newRound.hidden = true;
     spinBtn.hidden = false;
     board.classList.remove("won");
-    eyebrow.innerHTML = "Tonight's board &middot; Timog strip";
+    eyebrow.innerHTML = "today's lineup &middot; timog strip";
     refreshPot();
   }
 
@@ -897,6 +1194,39 @@
   });
 
   wireRow("reach", "reach", function (v) { reach = v; });
+
+  var copyBtn = $("tCopy");
+
+  function verdictText(p) {
+    var lines = ["lunch is decided: " + p.name];
+    if (p.inBuilding) {
+      lines.push("it's in this building. no excuses.");
+    } else {
+      lines.push(p.km.toFixed(2) + " km out, ~" + p.mins + " min walk" +
+        (p.mode === "walkable" ? "" : " (or just have it delivered)"));
+    }
+    if (p.low !== null) lines.push("around ₱" + p.low + "-" + p.high + " each");
+    if (p.rating !== null) lines.push(p.rating.toFixed(1) + "★ from " + p.count + " reviews");
+    if (p.url) lines.push(p.url);
+    lines.push("(the board decided. no rerolls.)");
+    return lines.join("\n");
+  }
+
+  copyBtn.addEventListener("click", function () {
+    if (!current) return;
+    var text = verdictText(current);
+    var done = function () {
+      copyBtn.textContent = "copied ✓";
+      copyBtn.classList.add("done");
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () {
+        copyBtn.textContent = "couldn't copy — select it manually";
+      });
+    } else {
+      copyBtn.textContent = "couldn't copy — select it manually";
+    }
+  });
 
   newRound.addEventListener("click", startNewRound);
   spinBtn.addEventListener("click", spin);
