@@ -394,50 +394,6 @@
   .stat dd .unit { color: var(--grey); font-size: 11.5px; }
   .stat.warn dd { color: var(--gold); }
 
-  .minimap {
-    margin-top: 16px;
-    border: 1px dashed var(--edge);
-    border-radius: var(--r);
-    padding: 12px 12px 8px;
-    background: rgba(255, 255, 255, 0.012);
-  }
-  .minimap svg { width: 100%; height: auto; display: block; overflow: visible; }
-  .minimap .ring { fill: none; stroke: #3A2427; stroke-width: 1; stroke-dasharray: 3 5; }
-  .minimap .rt {
-    fill: none;
-    stroke: var(--red-lit);
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-dasharray: 7 4;
-  }
-  .minimap .rt-ghost {
-    fill: none;
-    stroke: var(--red-dim);
-    stroke-width: 3.2;
-    stroke-linecap: round;
-    opacity: .45;
-  }
-  .minimap .pin { fill: none; stroke: var(--cream); stroke-width: 1.6; stroke-linecap: round; }
-  .minimap .pin-x { fill: none; stroke: var(--gold); stroke-width: 2; stroke-linecap: round; }
-  .minimap .needle { fill: none; stroke: var(--grey-2); stroke-width: 1.4; stroke-linecap: round; }
-  .minimap text {
-    font-family: var(--font-mono);
-    font-size: 9.5px;
-    letter-spacing: 0.08em;
-    fill: var(--grey);
-  }
-  .minimap text.you { fill: var(--cream); }
-  .minimap text.dest { fill: var(--gold); }
-  .minimap text.tick { font-size: 8.5px; fill: var(--grey-2); }
-  .mapcap {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--grey-2);
-    text-align: center;
-    margin: 8px 0 0;
-    font-variant-numeric: tabular-nums;
-  }
-
   .note {
     margin: 16px 0 0;
     padding-top: 15px;
@@ -605,10 +561,6 @@
       <div class="stat" id="tWalkWrap"><dt>walk time</dt><dd id="tWalk"></dd></div>
       <div class="stat"><dt>the damage</dt><dd id="tPrice"></dd></div>
     </dl>
-    <div class="minimap" id="minimap">
-      <div id="mapArt"></div>
-      <p class="mapcap" id="mapCap"></p>
-    </div>
     <p class="note" id="tNote"></p>
     <div class="actions">
       <a class="lockin" id="tMap" href="#" target="_blank" rel="noopener">take me there</a>
@@ -742,104 +694,7 @@
   /* the Triumph building — every distance, route and sketch starts here */
   var OLAT = 14.641697530484791, OLNG = 121.03417069320768;
   var ORIGIN = OLAT + "," + OLNG;
-  var KM_PER_LAT = 110.574;
-  var KM_PER_LNG = 111.320 * Math.cos(OLAT * Math.PI / 180);
-  var COMPASS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
 
-  /* deterministic wobble, so a given place always sketches the same way */
-  function seeded(n) {
-    var v = (n * 9301 + 49297) % 233280;
-    return function () { v = (v * 9301 + 49297) % 233280; return v / 233280; };
-  }
-
-  function offsetKm(p) {
-    return { x: (p.lng - OLNG) * KM_PER_LNG, y: (p.lat - OLAT) * KM_PER_LAT };
-  }
-
-  function drawSchematic(p) {
-    var art = $("mapArt"), cap = $("mapCap");
-    var W = 320, H = 176, cx = W / 2, cy = H / 2, maxR = 60;
-
-    if (p.inBuilding) {
-      art.innerHTML =
-        '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="You are already in the building">' +
-          '<circle class="ring" cx="' + cx + '" cy="' + cy + '" r="26"></circle>' +
-          '<circle class="ring" cx="' + cx + '" cy="' + cy + '" r="44"></circle>' +
-          '<circle cx="' + cx + '" cy="' + cy + '" r="4" fill="#F2E4E1"></circle>' +
-          '<text class="you" x="' + cx + '" y="' + (cy + 20) + '" text-anchor="middle">YOU. ALREADY. HERE.</text>' +
-        '</svg>';
-      cap.textContent = "0.00 km · no bearing · take the stairs";
-      return;
-    }
-
-    var d = offsetKm(p);
-    var km = Math.sqrt(d.x * d.x + d.y * d.y);
-    var view = Math.max(km * 1.22, 0.3);
-    var sc = maxR / view;
-    var tx = cx + d.x * sc, ty = cy - d.y * sc;
-    var rnd = seeded(p.id);
-
-    var svg = ['<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Rough sketch of the route from the Triumph building to ' + p.name + '">'];
-
-    /* distance rings, drawn a little unevenly on purpose */
-    [0.5, 1.0].forEach(function (k) {
-      var r = k * sc;
-      if (r > maxR + 26) return;
-      var pts = [];
-      for (var a = 0; a < 26; a++) {
-        var ang = (a / 26) * Math.PI * 2;
-        var rr = r * (1 + (rnd() - 0.5) * 0.05);
-        pts.push((cx + Math.cos(ang) * rr).toFixed(1) + "," + (cy + Math.sin(ang) * rr).toFixed(1));
-      }
-      svg.push('<path class="ring" d="M' + pts.join("L") + 'Z"></path>');
-      svg.push('<text class="tick" x="' + (cx + 3) + '" y="' + (cy - r + 10) + '">' + k.toFixed(1) + 'km</text>');
-    });
-
-    /* the route: straight line nudged off true, like a pen that wandered */
-    var segs = ["M" + cx + "," + cy];
-    for (var i = 1; i <= 4; i++) {
-      var t = i / 4;
-      var px = cx + (tx - cx) * t, py = cy + (ty - cy) * t;
-      if (i < 4) {
-        var nx = -(ty - cy), ny = (tx - cx);
-        var len = Math.sqrt(nx * nx + ny * ny) || 1;
-        var push = (rnd() - 0.5) * 11;
-        px += (nx / len) * push;
-        py += (ny / len) * push;
-      }
-      segs.push("L" + px.toFixed(1) + "," + py.toFixed(1));
-    }
-    var path = segs.join(" ");
-    svg.push('<path class="rt-ghost" d="' + path + '"></path>');
-    svg.push('<path class="rt" d="' + path + '"></path>');
-
-    /* you */
-    svg.push('<circle cx="' + cx + '" cy="' + cy + '" r="3.5" fill="#F2E4E1"></circle>');
-    svg.push('<path class="pin" d="M' + (cx - 9) + ',' + cy + 'h18M' + cx + ',' + (cy - 9) + 'v18"></path>');
-    svg.push('<text class="you" x="' + cx + '" y="' + (cy + 22) + '" text-anchor="middle">YOU</text>');
-
-    /* the verdict, marked with an X */
-    svg.push('<path class="pin-x" d="M' + (tx - 6) + ',' + (ty - 6) + 'l12,12M' + (tx + 6) + ',' + (ty - 6) + 'l-12,12"></path>');
-    var right = tx <= cx;
-    var label = p.name.length > 22 ? p.name.slice(0, 21) + "…" : p.name;
-    svg.push('<text class="dest" x="' + (tx + (right ? 11 : -11)).toFixed(1) + '" y="' +
-      (ty + (ty < cy ? -10 : 17)).toFixed(1) + '" text-anchor="' + (right ? "start" : "end") + '">' +
-      label.toUpperCase().replace(/&/g, "&amp;") + '</text>');
-
-    /* north, roughly */
-    var nx2 = W - 20;
-    svg.push('<path class="needle" d="M' + nx2 + ',34 V13 M' + (nx2 - 4) + ',18 L' + nx2 + ',12 L' + (nx2 + 4) + ',18"></path>');
-    svg.push('<text class="tick" x="' + nx2 + '" y="45" text-anchor="middle">N</text>');
-
-    svg.push('</svg>');
-    art.innerHTML = svg.join("");
-
-    var dir = COMPASS[Math.round(((Math.atan2(d.x, d.y) * 180 / Math.PI + 360) % 360) / 22.5) % 16];
-    cap.textContent = km.toFixed(2) + " km as the crow flies · bearing " + dir +
-      " · ~" + p.mins + " min on foot";
-  }
-
-  /* fun fact of the day — one gets pulled every time the board lands */
   var FACTS = [
     "The first computer bug was an actual moth, taped into the Harvard Mark II logbook in 1947.",
     "Grace Hopper built one of the earliest compilers, at a time when the idea that a computer could write its own machine code was dismissed as impossible.",
@@ -913,8 +768,9 @@
   var reach = "any";       /* layer 02 — how far you'll travel */
   var served = {};         /* spin behaviour, not a filter: no repeats until the pot empties */
   var history = [];
-  var locked = false;      /* once the board speaks, the round is over */
+  var current = null;
   var spinning = false;
+  var locked = false;      /* once the board speaks, the round is over */
 
   var $ = function (id) { return document.getElementById(id); };
   var board = $("board"), reel = $("reel"), subline = $("subline"), eyebrow = $("eyebrow");
@@ -1023,7 +879,6 @@
       ? 'your call <span class="unit">whatever is open</span>'
       : "₱" + p.low + "&ndash;" + p.high + ' <span class="unit">est.</span>';
 
-    drawSchematic(p);
     $("tNote").textContent = p.note;
 
     /* the in-building picks have no Maps listing to open */
